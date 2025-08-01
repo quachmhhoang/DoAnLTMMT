@@ -21,11 +21,12 @@
     
     <!-- Custom CSS -->
     <link href="/assets/css/style.css" rel="stylesheet">
+    <link href="/assets/css/minimal-theme.css" rel="stylesheet">
     <link href="/assets/css/animations.css" rel="stylesheet">
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark shadow">
+    <nav class="navbar navbar-expand-lg navbar-light shadow">
         <div class="container">
             <a class="navbar-brand" href="/">
                 <i class="fas fa-mobile-alt"></i> CellPhone Store

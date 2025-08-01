@@ -1,0 +1,315 @@
+/* Minimalist Color Override - Single Color Theme */
+
+/* Root Color Variables - Only One Color */
+:root {
+    /* Primary Color - Indigo */
+    --primary: #4f46e5;
+    --primary-rgb: 79, 70, 229;
+    
+    /* Neutral Colors */
+    --white: #ffffff;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
+    
+    /* Text Colors */
+    --text-primary: var(--gray-900);
+    --text-secondary: var(--gray-600);
+    --text-muted: var(--gray-500);
+    
+    /* Background */
+    --bg-body: var(--gray-50);
+    --bg-surface: var(--white);
+    --bg-muted: var(--gray-100);
+    
+    /* Borders */
+    --border-color: var(--gray-200);
+    --border-color-translucent: rgba(0, 0, 0, 0.1);
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    
+    /* Bootstrap Color Overrides */
+    --bs-primary: var(--primary);
+    --bs-primary-rgb: var(--primary-rgb);
+    --bs-success: var(--primary);
+    --bs-success-rgb: var(--primary-rgb);
+    --bs-danger: var(--primary);
+    --bs-danger-rgb: var(--primary-rgb);
+    --bs-warning: var(--primary);
+    --bs-warning-rgb: var(--primary-rgb);
+    --bs-info: var(--primary);
+    --bs-info-rgb: var(--primary-rgb);
+    
+    /* Focus */
+    --bs-focus-ring-color: rgba(var(--primary-rgb), 0.25);
+    --bs-focus-ring-width: 0.25rem;
+}
+
+/* Complete Bootstrap Override */
+.text-primary { color: var(--primary) !important; }
+.text-success { color: var(--primary) !important; }
+.text-danger { color: var(--primary) !important; }
+.text-warning { color: var(--primary) !important; }
+.text-info { color: var(--primary) !important; }
+
+.bg-primary { background-color: var(--primary) !important; }
+.bg-success { background-color: var(--bg-muted) !important; color: var(--text-primary) !important; }
+.bg-danger { background-color: var(--bg-muted) !important; color: var(--text-primary) !important; }
+.bg-warning { background-color: var(--bg-muted) !important; color: var(--text-primary) !important; }
+.bg-info { background-color: var(--bg-muted) !important; color: var(--text-primary) !important; }
+
+.border-primary { border-color: var(--primary) !important; }
+.border-success { border-color: var(--primary) !important; }
+.border-danger { border-color: var(--primary) !important; }
+.border-warning { border-color: var(--primary) !important; }
+.border-info { border-color: var(--primary) !important; }
+
+/* All Button Variants use Primary Color */
+.btn-primary,
+.btn-success,
+.btn-danger,
+.btn-warning,
+.btn-info {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: var(--white) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-success:hover,
+.btn-success:focus,
+.btn-success:active,
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-danger:active,
+.btn-warning:hover,
+.btn-warning:focus,
+.btn-warning:active,
+.btn-info:hover,
+.btn-info:focus,
+.btn-info:active {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: var(--white) !important;
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-outline-primary,
+.btn-outline-success,
+.btn-outline-danger,
+.btn-outline-warning,
+.btn-outline-info {
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    background-color: transparent !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active,
+.btn-outline-success:hover,
+.btn-outline-success:focus,
+.btn-outline-success:active,
+.btn-outline-danger:hover,
+.btn-outline-danger:focus,
+.btn-outline-danger:active,
+.btn-outline-warning:hover,
+.btn-outline-warning:focus,
+.btn-outline-warning:active,
+.btn-outline-info:hover,
+.btn-outline-info:focus,
+.btn-outline-info:active {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: var(--white) !important;
+}
+
+/* Alert Overrides */
+.alert-primary,
+.alert-success,
+.alert-danger,
+.alert-warning,
+.alert-info {
+    background-color: var(--bg-muted) !important;
+    border-color: var(--primary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Badge Overrides */
+.badge.bg-primary,
+.badge.bg-success,
+.badge.bg-danger,
+.badge.bg-warning,
+.badge.bg-info {
+    background-color: var(--primary) !important;
+    color: var(--white) !important;
+}
+
+/* Progress Bar */
+.progress-bar {
+    background-color: var(--primary) !important;
+}
+
+/* Links */
+a {
+    color: var(--primary);
+}
+
+a:hover,
+a:focus {
+    color: var(--primary);
+    opacity: 0.8;
+}
+
+/* Form Controls Focus */
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 0.25rem rgba(var(--primary-rgb), 0.25) !important;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+/* Navigation Active States */
+.nav-link.active,
+.navbar-nav .nav-link.active {
+    color: var(--primary) !important;
+}
+
+.nav-pills .nav-link.active {
+    background-color: var(--primary) !important;
+}
+
+/* Table Highlights */
+.table-primary,
+.table-success,
+.table-danger,
+.table-warning,
+.table-info {
+    background-color: var(--bg-muted) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Pagination */
+.page-link {
+    color: var(--primary) !important;
+}
+
+.page-link:hover,
+.page-link:focus {
+    color: var(--primary) !important;
+    background-color: var(--bg-muted) !important;
+}
+
+.page-item.active .page-link {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+/* List Group */
+.list-group-item.active {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+/* Spinner */
+.spinner-border-primary,
+.spinner-grow-primary {
+    color: var(--primary) !important;
+}
+
+/* Accordion */
+.accordion-button:not(.collapsed) {
+    background-color: var(--bg-muted) !important;
+    color: var(--primary) !important;
+}
+
+/* Offcanvas Header */
+.offcanvas-header {
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* Modal Header */
+.modal-header {
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* Remove all gradients and shadows except our minimal ones */
+.btn,
+.card,
+.modal-content,
+.dropdown-menu,
+.navbar,
+.offcanvas {
+    background-image: none !important;
+    box-shadow: var(--shadow) !important;
+}
+
+/* Custom Hover Effects - Subtle */
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg) !important;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Override any remaining color variants */
+.text-success,
+.text-danger,
+.text-warning,
+.text-info,
+.text-primary {
+    color: var(--primary) !important;
+}
+
+/* Icon colors */
+.fas,
+.far,
+.fab {
+    color: inherit;
+}
+
+.text-primary .fas,
+.text-primary .far,
+.text-primary .fab {
+    color: var(--primary) !important;
+}
+
+/* Ensure white text on primary backgrounds */
+.bg-primary,
+.btn-primary,
+.btn-success,
+.btn-danger,
+.btn-warning,
+.btn-info,
+.badge {
+    color: var(--white) !important;
+}
+
+.bg-primary .fas,
+.bg-primary .far,
+.bg-primary .fab,
+.btn-primary .fas,
+.btn-primary .far,
+.btn-primary .fab {
+    color: var(--white) !important;
+}

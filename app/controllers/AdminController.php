@@ -10,17 +10,47 @@ class AdminController {
     
     // Dashboard admin
     public function dashboard() {
+        // Khởi tạo các models
         $productModel = new Product();
         $orderModel = new Order();
         $userModel = new User();
         
-        // Thống kê
-        $totalProducts = $productModel->countProducts();
-        $totalOrders = count($orderModel->getAllOrders());
-        $totalUsers = count($userModel->getAllUsers());
-        
-        // Đơn hàng gần đây
-        $recentOrders = array_slice($orderModel->getAllOrders(), 0, 5);
+        try {
+            // Lấy thống kê từ database
+            $totalProducts = $productModel->countProducts();
+            $allOrders = $orderModel->getAllOrders();
+            $totalOrders = count($allOrders);
+            $allUsers = $userModel->getAllUsers();
+            $totalUsers = count($allUsers);
+            
+            // Tính tổng doanh thu từ các đơn hàng hoàn thành
+            $totalRevenue = 0;
+            $currentMonth = date('Y-m');
+            foreach ($allOrders as $order) {
+                if (($order->status ?? '') === 'completed' && 
+                    strpos($order->order_date ?? '', $currentMonth) === 0) {
+                    $totalRevenue += (float)($order->total_amount ?? 0);
+                }
+            }
+            
+            // Lấy đơn hàng gần đây (5 đơn mới nhất)
+            $recentOrders = array_slice($allOrders, 0, 10);
+            
+            // Lấy thông tin user hiện tại
+            $user = SessionHelper::getCurrentUser();
+            
+        } catch (Exception $e) {
+            // Xử lý lỗi và thiết lập giá trị mặc định
+            $totalProducts = 0;
+            $totalOrders = 0;
+            $totalUsers = 0;
+            $totalRevenue = 0;
+            $recentOrders = [];
+            $user = (object)['full_name' => 'Admin'];
+            
+            // Log lỗi hoặc hiển thị thông báo
+            error_log("Dashboard error: " . $e->getMessage());
+        }
         
         include __DIR__ . '/../views/admin/dashboard.php';
     }

@@ -101,7 +101,7 @@
                             <i class="fas fa-user-circle"></i>
                         </div>
                         <div class="user-details">
-                            <div class="user-name"><?php echo htmlspecialchars($user->full_name ?? 'Admin'); ?></div>
+                            <div class="user-name"><?php echo htmlspecialchars(($_SESSION['full_name'] ?? $user->full_name ?? 'Admin')); ?></div>
                             <div class="user-role">Quản trị viên</div>
                         </div>
                     </div>
@@ -130,7 +130,7 @@
                         <div class="dropdown">
                             <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="fas fa-user"></i>
-                                <span class="d-none d-md-inline"><?php echo htmlspecialchars($user->full_name ?? 'Admin'); ?></span>
+                                <span class="d-none d-md-inline"><?php echo htmlspecialchars(($_SESSION['full_name'] ?? $user->full_name ?? 'Admin')); ?></span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="/"><i class="fas fa-home"></i> Trang chủ</a></li>

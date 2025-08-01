@@ -1,126 +1,31 @@
-// Admin Dashboard JavaScript
+// Modern Admin Dashboard JavaScript
+// ===============================
 
-class AdminDashboard {
+class ModernAdminDashboard {
     constructor() {
         this.init();
         this.bindEvents();
-        this.loadCharts();
-        this.initDashboard();
+        this.loadComponents();
     }
 
     init() {
-        // Initialize tooltips and popovers
+        // Initialize tooltips
         this.initTooltips();
-        
-        // Initialize data tables
-        this.initDataTables();
         
         // Initialize sidebar
         this.initSidebar();
         
-        // Initialize modals
-        this.initModals();
+        // Initialize data tables
+        this.initDataTables();
         
-        // Initialize forms
-        this.initForms();
+        // Initialize theme toggle
+        this.initThemeToggle();
         
-        // Initialize notifications
-        this.initNotifications();
-    }
-
-    bindEvents() {
-        // Sidebar toggle
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('#sidebarToggle, .sidebar-toggle')) {
-                this.toggleSidebar();
-            }
-        });
-
-        // Mobile menu toggle
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.mobile-menu-toggle')) {
-                this.toggleMobileMenu();
-            }
-        });
-
-        // Theme toggle
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('#themeToggle')) {
-                this.toggleTheme();
-            }
-        });
-
-        // Search functionality
-        const searchInput = document.querySelector('#adminSearch');
-        if (searchInput) {
-            searchInput.addEventListener('input', this.handleSearch.bind(this));
-        }
-
-        // Quick actions
-        document.querySelectorAll('.quick-action-btn').forEach(btn => {
-            btn.addEventListener('click', this.handleQuickAction.bind(this));
-        });
-
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', (e) => {
-            const sidebar = document.querySelector('.admin-sidebar');
-            const toggleBtn = document.querySelector('.mobile-menu-toggle');
-            
-            if (window.innerWidth <= 768 && 
-                sidebar && 
-                sidebar.classList.contains('show') && 
-                !sidebar.contains(e.target) && 
-                !toggleBtn.contains(e.target)) {
-                this.closeMobileMenu();
-            }
-        });
-
-        // Status change buttons
-        document.querySelectorAll('.status-btn').forEach(btn => {
-            btn.addEventListener('click', this.handleStatusChange.bind(this));
-        });
-
-        // Delete buttons
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', this.handleDelete.bind(this));
-        });
-
-        // Bulk actions
-        document.querySelectorAll('.bulk-action-select').forEach(checkbox => {
-            checkbox.addEventListener('change', this.handleBulkSelect.bind(this));
-        });
-
-        // Image upload
-        document.querySelectorAll('.image-upload-input').forEach(input => {
-            input.addEventListener('change', this.handleImageUpload.bind(this));
-        });
-
-        // Form submissions
-        document.querySelectorAll('.admin-form').forEach(form => {
-            form.addEventListener('submit', this.handleFormSubmit.bind(this));
-        });
-
-        // Search functionality
-        const adminSearchInput = document.querySelector('#adminSearch');
-        if (adminSearchInput) {
-            adminSearchInput.addEventListener('input', this.debounce(this.handleAdminSearch.bind(this), 300));
-        }
-
-        // Filter dropdowns
-        document.querySelectorAll('.filter-select').forEach(select => {
-            select.addEventListener('change', this.handleFilterChange.bind(this));
-        });
-
-        // Export buttons
-        document.querySelectorAll('.export-btn').forEach(btn => {
-            btn.addEventListener('click', this.handleExport.bind(this));
-        });
-
-        // Theme toggle
-        const themeToggle = document.querySelector('#themeToggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', this.toggleTheme.bind(this));
-        }
+        // Initialize search
+        this.initSearch();
+        
+        // Initialize animations
+        this.initAnimations();
     }
 
     initTooltips() {
@@ -129,598 +34,513 @@ class AdminDashboard {
         tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
+    }
 
-        // Initialize popovers
-        const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-        popoverTriggerList.map(function (popoverTriggerEl) {
-            return new bootstrap.Popover(popoverTriggerEl);
+    initSidebar() {
+        const sidebar = document.querySelector('.admin-sidebar');
+        const sidebarToggle = document.querySelector('.sidebar-toggle');
+        const mobileToggle = document.querySelector('.mobile-menu-toggle');
+        const mainContent = document.querySelector('.admin-main-content');
+
+        // Mobile sidebar toggle
+        if (mobileToggle) {
+            mobileToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+                document.body.classList.toggle('sidebar-open');
+            });
+        }
+
+        // Desktop sidebar toggle
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+            });
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(e.target) && !mobileToggle.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            }
+        });
+
+        // Active nav item highlighting
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+        
+        navLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href === currentPath || (href !== '/admin' && currentPath.startsWith(href))) {
+                link.classList.add('active');
+            }
         });
     }
 
     initDataTables() {
-        // Initialize DataTables if available
+        // Initialize DataTables for admin tables
         if (typeof DataTable !== 'undefined') {
-            document.querySelectorAll('.data-table').forEach(table => {
+            const tables = document.querySelectorAll('.admin-table');
+            tables.forEach(table => {
                 new DataTable(table, {
                     responsive: true,
                     pageLength: 25,
                     language: {
                         url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/vi.json'
                     },
-                    dom: '<"row"<"col-md-6"l><"col-md-6"f>>rtip',
-                    order: [[0, 'desc']]
+                    columnDefs: [
+                        { orderable: false, targets: 'no-sort' }
+                    ]
                 });
             });
         }
     }
 
-    initSidebar() {
-        // Handle sidebar navigation
-        const sidebarLinks = document.querySelectorAll('.sidebar-nav .nav-link');
-        sidebarLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                // Remove active class from all links
-                sidebarLinks.forEach(l => l.classList.remove('active'));
-                // Add active class to clicked link
-                e.target.classList.add('active');
-            });
-        });
+    initThemeToggle() {
+        const themeToggle = document.querySelector('#themeToggle');
+        if (!themeToggle) return;
 
-        // Collapse/expand sidebar items
-        document.querySelectorAll('.sidebar-submenu-toggle').forEach(toggle => {
-            toggle.addEventListener('click', (e) => {
-                e.preventDefault();
-                const submenu = toggle.nextElementSibling;
-                if (submenu) {
-                    submenu.classList.toggle('show');
-                    toggle.querySelector('.fa-chevron-down').classList.toggle('rotate');
-                }
-            });
+        // Get saved theme or default to light
+        const savedTheme = localStorage.getItem('adminTheme') || 'light';
+        this.setTheme(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            this.setTheme(newTheme);
+            localStorage.setItem('adminTheme', newTheme);
         });
     }
 
-    initModals() {
-        // Auto-focus first input in modals
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('shown.bs.modal', function () {
-                const firstInput = this.querySelector('input:not([type="hidden"]), select, textarea');
-                if (firstInput) {
-                    firstInput.focus();
-                }
-            });
-        });
-    }
-
-    initForms() {
-        // Initialize form validation
-        document.querySelectorAll('.needs-validation').forEach(form => {
-            form.addEventListener('submit', (e) => {
-                if (!form.checkValidity()) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }
-                form.classList.add('was-validated');
-            });
-        });
-
-        // Rich text editors
-        this.initRichTextEditors();
-    }
-
-    initRichTextEditors() {
-        // Initialize TinyMCE or other rich text editors
-        if (typeof tinymce !== 'undefined') {
-            tinymce.init({
-                selector: '.rich-text-editor',
-                height: 300,
-                menubar: false,
-                plugins: [
-                    'advlist autolink lists link image charmap print preview anchor',
-                    'searchreplace visualblocks code fullscreen',
-                    'insertdatetime media table paste code help wordcount'
-                ],
-                toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help'
-            });
+    setTheme(theme) {
+        const body = document.body;
+        const themeIcon = document.querySelector('#themeToggle i');
+        
+        if (theme === 'dark') {
+            body.classList.add('dark-theme');
+            if (themeIcon) themeIcon.className = 'fas fa-sun';
+        } else {
+            body.classList.remove('dark-theme');
+            if (themeIcon) themeIcon.className = 'fas fa-moon';
         }
     }
 
-    initNotifications() {
-        // Auto-hide alerts after 5 seconds
-        document.querySelectorAll('.alert:not(.alert-permanent)').forEach(alert => {
+    initSearch() {
+        const searchInput = document.querySelector('#adminSearch');
+        if (!searchInput) return;
+
+        searchInput.addEventListener('input', this.debounce((e) => {
+            const query = e.target.value.toLowerCase();
+            this.performSearch(query);
+        }, 300));
+    }
+
+    performSearch(query) {
+        // Implement search functionality
+        if (query.length < 2) return;
+
+        // Search in current page content
+        const searchableElements = document.querySelectorAll('[data-searchable]');
+        searchableElements.forEach(element => {
+            const text = element.textContent.toLowerCase();
+            const isMatch = text.includes(query);
+            
+            element.style.display = isMatch ? '' : 'none';
+            
+            // Highlight matching text
+            if (isMatch && query.length > 0) {
+                this.highlightText(element, query);
+            }
+        });
+    }
+
+    highlightText(element, query) {
+        const text = element.textContent;
+        const regex = new RegExp(`(${query})`, 'gi');
+        const highlightedText = text.replace(regex, '<mark>$1</mark>');
+        element.innerHTML = highlightedText;
+    }
+
+    initAnimations() {
+        // Animate stat cards on load
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.classList.add('animate-fade-in-up');
+        });
+
+        // Animate dashboard cards
+        const dashboardCards = document.querySelectorAll('.dashboard-card');
+        dashboardCards.forEach((card, index) => {
+            card.style.animationDelay = `${0.5 + index * 0.2}s`;
+            card.classList.add('animate-fade-in-up');
+        });
+
+        // Counter animation for stat numbers
+        this.animateCounters();
+    }
+
+    animateCounters() {
+        const counters = document.querySelectorAll('.stat-number');
+        
+        const observerOptions = {
+            threshold: 0.5,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    this.animateCounter(entry.target);
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        counters.forEach(counter => observer.observe(counter));
+    }
+
+    animateCounter(element) {
+        const text = element.textContent;
+        const number = parseInt(text.replace(/[^\d]/g, ''));
+        const suffix = text.replace(/[\d,\.]/g, '');
+        const duration = 2000;
+        const step = number / (duration / 16);
+
+        let current = 0;
+        const timer = setInterval(() => {
+            current += step;
+            if (current >= number) {
+                current = number;
+                clearInterval(timer);
+            }
+            element.textContent = Math.floor(current).toLocaleString('vi-VN') + suffix;
+        }, 16);
+    }
+
+    bindEvents() {
+        // Form submissions
+        this.bindFormEvents();
+        
+        // Modal events
+        this.bindModalEvents();
+        
+        // Button actions
+        this.bindButtonEvents();
+        
+        // Notification events
+        this.bindNotificationEvents();
+    }
+
+    bindFormEvents() {
+        const forms = document.querySelectorAll('.admin-form');
+        forms.forEach(form => {
+            form.addEventListener('submit', (e) => {
+                this.handleFormSubmit(e, form);
+            });
+        });
+
+        // File upload handling
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            input.addEventListener('change', (e) => {
+                this.handleFileUpload(e);
+            });
+        });
+    }
+
+    handleFormSubmit(e, form) {
+        // Add loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span> Đang xử lý...';
+        }
+
+        // Validate form
+        if (!this.validateForm(form)) {
+            e.preventDefault();
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = submitBtn.dataset.originalText || 'Lưu';
+            }
+        }
+    }
+
+    validateForm(form) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                this.showFieldError(field, 'Trường này là bắt buộc');
+                isValid = false;
+            } else {
+                this.clearFieldError(field);
+            }
+        });
+
+        return isValid;
+    }
+
+    showFieldError(field, message) {
+        field.classList.add('is-invalid');
+        
+        let errorDiv = field.parentNode.querySelector('.invalid-feedback');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback';
+            field.parentNode.appendChild(errorDiv);
+        }
+        errorDiv.textContent = message;
+    }
+
+    clearFieldError(field) {
+        field.classList.remove('is-invalid');
+        const errorDiv = field.parentNode.querySelector('.invalid-feedback');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+    }
+
+    handleFileUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Create preview for images
+        if (file.type.startsWith('image/')) {
+            this.createImagePreview(e.target, file);
+        }
+
+        // Show file info
+        this.showFileInfo(e.target, file);
+    }
+
+    createImagePreview(input, file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            let preview = input.parentNode.querySelector('.image-preview');
+            if (!preview) {
+                preview = document.createElement('div');
+                preview.className = 'image-preview mt-2';
+                input.parentNode.appendChild(preview);
+            }
+            preview.innerHTML = `
+                <img src="${e.target.result}" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="this.parentNode.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    showFileInfo(input, file) {
+        const fileSize = (file.size / 1024 / 1024).toFixed(2);
+        let infoDiv = input.parentNode.querySelector('.file-info');
+        
+        if (!infoDiv) {
+            infoDiv = document.createElement('div');
+            infoDiv.className = 'file-info mt-1 text-muted small';
+            input.parentNode.appendChild(infoDiv);
+        }
+        
+        infoDiv.textContent = `${file.name} (${fileSize} MB)`;
+    }
+
+    bindModalEvents() {
+        // Auto-focus first input in modals
+        document.addEventListener('shown.bs.modal', (e) => {
+            const firstInput = e.target.querySelector('input, select, textarea');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        });
+    }
+
+    bindButtonEvents() {
+        // Delete confirmation
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('.btn-delete') || e.target.closest('.btn-delete')) {
+                e.preventDefault();
+                this.showDeleteConfirmation(e.target);
+            }
+        });
+
+        // Copy to clipboard
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('.btn-copy') || e.target.closest('.btn-copy')) {
+                e.preventDefault();
+                this.copyToClipboard(e.target);
+            }
+        });
+    }
+
+    showDeleteConfirmation(button) {
+        const href = button.getAttribute('href') || button.dataset.href;
+        const itemName = button.dataset.name || 'item này';
+        
+        if (confirm(`Bạn có chắc chắn muốn xóa ${itemName}? Hành động này không thể hoàn tác.`)) {
+            if (href) {
+                window.location.href = href;
+            }
+        }
+    }
+
+    copyToClipboard(button) {
+        const text = button.dataset.copy;
+        if (!text) return;
+
+        navigator.clipboard.writeText(text).then(() => {
+            this.showNotification('Đã sao chép vào clipboard', 'success');
+        }).catch(() => {
+            this.showNotification('Không thể sao chép', 'error');
+        });
+    }
+
+    bindNotificationEvents() {
+        // Auto-dismiss alerts
+        const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
+        alerts.forEach(alert => {
             setTimeout(() => {
-                if (alert.parentElement) {
-                    alert.classList.add('fade-out');
+                if (alert.parentNode) {
+                    alert.style.opacity = '0';
                     setTimeout(() => alert.remove(), 300);
                 }
             }, 5000);
         });
     }
 
-    initDashboard() {
-        // Load dashboard statistics
-        this.loadDashboardStats();
-        
-        // Auto-refresh dashboard every 5 minutes
-        setInterval(() => {
-            this.refreshDashboardStats();
-        }, 300000);
-    }
-
-    toggleSidebar() {
-        const sidebar = document.querySelector('.admin-sidebar');
-        const mainContent = document.querySelector('.admin-main-content');
-        
-        sidebar.classList.toggle('collapsed');
-        mainContent.classList.toggle('expanded');
-        
-        // Save state to localStorage
-        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-    }
-
-    toggleMobileMenu() {
-        const sidebar = document.querySelector('.admin-sidebar');
-        sidebar.classList.toggle('mobile-show');
-    }
-
-    handleQuickAction(event) {
-        const btn = event.currentTarget;
-        const action = btn.dataset.action;
-        const id = btn.dataset.id;
-        
-        switch (action) {
-            case 'edit':
-                this.openEditModal(id);
-                break;
-            case 'view':
-                this.openViewModal(id);
-                break;
-            case 'duplicate':
-                this.duplicateItem(id);
-                break;
-            default:
-                console.log('Unknown action:', action);
+    loadComponents() {
+        // Load dashboard charts if available
+        if (typeof Chart !== 'undefined') {
+            this.loadCharts();
         }
-    }
 
-    handleStatusChange(event) {
-        const btn = event.currentTarget;
-        const id = btn.dataset.id;
-        const type = btn.dataset.type;
-        const newStatus = btn.dataset.status;
-        
-        if (confirm('Bạn có chắc muốn thay đổi trạng thái?')) {
-            this.updateStatus(id, type, newStatus);
-        }
-    }
-
-    handleDelete(event) {
-        event.preventDefault();
-        const btn = event.currentTarget;
-        const id = btn.dataset.id;
-        const type = btn.dataset.type;
-        const name = btn.dataset.name || 'mục này';
-        
-        if (confirm(`Bạn có chắc muốn xóa ${name}? Hành động này không thể hoàn tác.`)) {
-            this.deleteItem(id, type);
-        }
-    }
-
-    handleBulkSelect(event) {
-        const checkbox = event.currentTarget;
-        const table = checkbox.closest('table');
-        
-        if (checkbox.id === 'selectAll') {
-            // Select/deselect all checkboxes
-            const allCheckboxes = table.querySelectorAll('.bulk-action-select:not(#selectAll)');
-            allCheckboxes.forEach(cb => {
-                cb.checked = checkbox.checked;
-            });
-        }
-        
-        this.updateBulkActionButtons();
-    }
-
-    handleImageUpload(event) {
-        const input = event.currentTarget;
-        const file = input.files[0];
-        
-        if (file) {
-            // Validate file type and size
-            if (!file.type.startsWith('image/')) {
-                this.showAlert('Vui lòng chọn file hình ảnh!', 'danger');
-                input.value = '';
-                return;
-            }
-            
-            if (file.size > 5 * 1024 * 1024) { // 5MB
-                this.showAlert('File quá lớn! Vui lòng chọn file nhỏ hơn 5MB.', 'danger');
-                input.value = '';
-                return;
-            }
-            
-            // Preview image
-            this.previewImage(input, file);
-        }
-    }
-
-    handleFormSubmit(event) {
-        const form = event.currentTarget;
-        const submitBtn = form.querySelector('button[type="submit"]');
-        
-        if (submitBtn) {
-            submitBtn.classList.add('loading');
-            submitBtn.disabled = true;
-        }
-        
-        // Add loading overlay to form
-        this.showFormLoading(form);
-    }
-
-    handleAdminSearch(event) {
-        const query = event.target.value.trim();
-        const searchType = event.target.dataset.searchType || 'global';
-        
-        if (query.length >= 2) {
-            this.performAdminSearch(query, searchType);
-        } else {
-            this.clearSearchResults();
-        }
-    }
-
-    handleFilterChange(event) {
-        const select = event.currentTarget;
-        const filterType = select.dataset.filter;
-        const value = select.value;
-        
-        this.applyFilter(filterType, value);
-    }
-
-    handleExport(event) {
-        const btn = event.currentTarget;
-        const exportType = btn.dataset.exportType;
-        const dataType = btn.dataset.dataType;
-        
-        btn.classList.add('loading');
-        btn.disabled = true;
-        
-        this.exportData(exportType, dataType).finally(() => {
-            btn.classList.remove('loading');
-            btn.disabled = false;
-        });
+        // Load real-time updates
+        this.initRealTimeUpdates();
     }
 
     loadCharts() {
-        // Load Chart.js charts if available
-        if (typeof Chart !== 'undefined') {
-            this.loadSalesChart();
-            this.loadOrdersChart();
-            this.loadCategoryChart();
-        }
+        // Mini charts for stat cards
+        const chartElements = document.querySelectorAll('.mini-chart');
+        chartElements.forEach(element => {
+            this.createMiniChart(element);
+        });
     }
 
-    loadSalesChart() {
-        const ctx = document.getElementById('salesChart');
-        if (!ctx) return;
+    createMiniChart(element) {
+        const type = element.dataset.type;
+        const canvas = document.createElement('canvas');
+        canvas.width = 100;
+        canvas.height = 30;
+        element.appendChild(canvas);
 
-        new Chart(ctx, {
+        // Sample data based on type
+        const data = this.generateSampleData(type);
+        
+        new Chart(canvas, {
             type: 'line',
             data: {
-                labels: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6'],
+                labels: data.labels,
                 datasets: [{
-                    label: 'Doanh thu',
-                    data: [12000000, 19000000, 15000000, 25000000, 22000000, 30000000],
-                    borderColor: 'rgb(75, 192, 192)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    data: data.values,
+                    borderColor: this.getChartColor(type),
+                    backgroundColor: this.getChartColor(type, 0.1),
+                    borderWidth: 2,
+                    fill: true,
                     tension: 0.4
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: false,
+                plugins: { legend: { display: false } },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return new Intl.NumberFormat('vi-VN').format(value) + ' đ';
-                            }
-                        }
-                    }
-                }
+                    x: { display: false },
+                    y: { display: false }
+                },
+                elements: { point: { radius: 0 } }
             }
         });
     }
 
-    loadOrdersChart() {
-        const ctx = document.getElementById('ordersChart');
-        if (!ctx) return;
-
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'],
-                datasets: [{
-                    label: 'Đơn hàng',
-                    data: [12, 19, 15, 25, 22, 30, 18],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.8)',
-                        'rgba(54, 162, 235, 0.8)',
-                        'rgba(255, 205, 86, 0.8)',
-                        'rgba(75, 192, 192, 0.8)',
-                        'rgba(153, 102, 255, 0.8)',
-                        'rgba(255, 159, 64, 0.8)',
-                        'rgba(201, 203, 207, 0.8)'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
-
-    loadCategoryChart() {
-        const ctx = document.getElementById('categoryChart');
-        if (!ctx) return;
-
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['iPhone', 'Samsung', 'Oppo', 'Vivo', 'Xiaomi'],
-                datasets: [{
-                    data: [30, 25, 20, 15, 10],
-                    backgroundColor: [
-                        '#FF6384',
-                        '#36A2EB',
-                        '#FFCE56',
-                        '#4BC0C0',
-                        '#9966FF'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            }
-        });
-    }
-
-    loadDashboardStats() {
-        // This would typically fetch real-time stats from the server
-        this.updateStatCard('totalRevenue', '₫125,450,000');
-        this.updateStatCard('totalOrders', '1,247');
-        this.updateStatCard('totalProducts', '456');
-        this.updateStatCard('totalUsers', '2,891');
-    }
-
-    refreshDashboardStats() {
-        // Refresh dashboard statistics
-        this.loadDashboardStats();
-        this.showNotification('Đã cập nhật thống kê mới nhất', 'info');
-    }
-
-    updateStatCard(cardId, value) {
-        const card = document.querySelector(`[data-stat="${cardId}"]`);
-        if (card) {
-            const valueElement = card.querySelector('.stat-value');
-            if (valueElement) {
-                valueElement.textContent = value;
-                // Add animation
-                valueElement.style.transform = 'scale(1.1)';
-                setTimeout(() => {
-                    valueElement.style.transform = 'scale(1)';
-                }, 200);
-            }
-        }
-    }
-
-    openEditModal(id) {
-        // Open edit modal for specific item
-        const modal = document.querySelector('#editModal');
-        if (modal) {
-            // Load item data via AJAX
-            this.loadItemData(id).then(data => {
-                this.populateEditForm(data);
-                new bootstrap.Modal(modal).show();
-            });
-        }
-    }
-
-    openViewModal(id) {
-        // Open view modal for specific item
-        const modal = document.querySelector('#viewModal');
-        if (modal) {
-            this.loadItemData(id).then(data => {
-                this.populateViewModal(data);
-                new bootstrap.Modal(modal).show();
-            });
-        }
-    }
-
-    updateStatus(id, type, status) {
-        const formData = new FormData();
-        formData.append('id', id);
-        formData.append('type', type);
-        formData.append('status', status);
-        formData.append('action', 'update_status');
-        
-        fetch('/admin/ajax/update-status', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                this.showAlert('Đã cập nhật trạng thái!', 'success');
-                location.reload();
-            } else {
-                this.showAlert(data.message || 'Có lỗi xảy ra!', 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            this.showAlert('Có lỗi xảy ra!', 'danger');
-        });
-    }
-
-    deleteItem(id, type) {
-        const formData = new FormData();
-        formData.append('id', id);
-        formData.append('type', type);
-        formData.append('action', 'delete');
-        
-        fetch('/admin/ajax/delete-item', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                this.showAlert('Đã xóa thành công!', 'success');
-                location.reload();
-            } else {
-                this.showAlert(data.message || 'Có lỗi xảy ra!', 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            this.showAlert('Có lỗi xảy ra!', 'danger');
-        });
-    }
-
-    updateBulkActionButtons() {
-        const checkedBoxes = document.querySelectorAll('.bulk-action-select:checked:not(#selectAll)');
-        const bulkActionBar = document.querySelector('.bulk-action-bar');
-        
-        if (checkedBoxes.length > 0) {
-            bulkActionBar.classList.add('show');
-            bulkActionBar.querySelector('.selected-count').textContent = checkedBoxes.length;
-        } else {
-            bulkActionBar.classList.remove('show');
-        }
-    }
-
-    previewImage(input, file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = input.parentElement.querySelector('.image-preview');
-            if (preview) {
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-            }
+    generateSampleData(type) {
+        const baseValues = {
+            products: [20, 25, 22, 28, 30, 26, 32],
+            orders: [5, 12, 8, 15, 18, 14, 20],
+            users: [100, 105, 110, 108, 115, 120, 125],
+            revenue: [1000, 1200, 1100, 1400, 1600, 1300, 1800]
         };
-        reader.readAsDataURL(file);
+
+        return {
+            labels: ['', '', '', '', '', '', ''],
+            values: baseValues[type] || [0, 0, 0, 0, 0, 0, 0]
+        };
     }
 
-    showFormLoading(form) {
-        const overlay = document.createElement('div');
-        overlay.className = 'form-loading-overlay';
-        overlay.innerHTML = '<div class="spinner-border text-primary"></div>';
-        form.style.position = 'relative';
-        form.appendChild(overlay);
+    getChartColor(type, alpha = 1) {
+        const colors = {
+            products: `rgba(59, 130, 246, ${alpha})`,
+            orders: `rgba(16, 185, 129, ${alpha})`,
+            users: `rgba(245, 158, 11, ${alpha})`,
+            revenue: `rgba(139, 92, 246, ${alpha})`
+        };
+        return colors[type] || `rgba(107, 114, 128, ${alpha})`;
     }
 
-    performAdminSearch(query, type) {
-        // Perform admin search via AJAX
-        console.log('Admin searching for:', query, 'type:', type);
+    initRealTimeUpdates() {
+        // Update dashboard stats every 30 seconds
+        setInterval(() => {
+            this.updateDashboardStats();
+        }, 30000);
     }
 
-    clearSearchResults() {
-        const resultsContainer = document.querySelector('#adminSearchResults');
-        if (resultsContainer) {
-            resultsContainer.innerHTML = '';
-        }
+    updateDashboardStats() {
+        // Fetch updated stats via AJAX
+        fetch('/admin/api/stats')
+            .then(response => response.json())
+            .then(data => {
+                this.updateStatCards(data);
+            })
+            .catch(error => {
+                console.log('Stats update failed:', error);
+            });
     }
 
-    applyFilter(filterType, value) {
-        // Apply filter to current view
-        const url = new URL(window.location);
-        if (value) {
-            url.searchParams.set(filterType, value);
-        } else {
-            url.searchParams.delete(filterType);
-        }
-        window.location.href = url.toString();
-    }
-
-    async exportData(exportType, dataType) {
-        const response = await fetch(`/admin/export/${dataType}?format=${exportType}`);
-        if (response.ok) {
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${dataType}_export.${exportType}`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-        }
-    }
-
-    async loadItemData(id) {
-        const response = await fetch(`/admin/ajax/get-item/${id}`);
-        return await response.json();
-    }
-
-    populateEditForm(data) {
-        // Populate edit form with data
+    updateStatCards(data) {
         Object.keys(data).forEach(key => {
-            const input = document.querySelector(`#editModal [name="${key}"]`);
-            if (input) {
-                input.value = data[key];
+            const statNumber = document.querySelector(`.stat-card.${key}-card .stat-number`);
+            if (statNumber) {
+                statNumber.textContent = this.formatNumber(data[key]);
             }
         });
     }
 
-    populateViewModal(data) {
-        // Populate view modal with data
-        Object.keys(data).forEach(key => {
-            const element = document.querySelector(`#viewModal [data-field="${key}"]`);
-            if (element) {
-                element.textContent = data[key];
-            }
-        });
-    }
-
-    toggleTheme() {
-        const body = document.body;
-        body.classList.toggle('dark-theme');
-        
-        // Save theme preference
-        localStorage.setItem('adminTheme', body.classList.contains('dark-theme') ? 'dark' : 'light');
-    }
-
-    showAlert(message, type = 'info') {
-        const alertContainer = document.querySelector('.alert-container') || document.body;
-        const alert = document.createElement('div');
-        alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-        alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-        alert.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        
-        alertContainer.appendChild(alert);
-        
-        setTimeout(() => {
-            if (alert.parentElement) {
-                alert.remove();
-            }
-        }, 5000);
+    formatNumber(num) {
+        return new Intl.NumberFormat('vi-VN').format(num);
     }
 
     showNotification(message, type = 'info') {
-        this.showAlert(message, type);
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show notification-toast`;
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        // Add to notification container or body
+        const container = document.querySelector('.notification-container') || document.body;
+        container.appendChild(notification);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
     }
 
     // Utility function for debouncing
@@ -735,106 +555,41 @@ class AdminDashboard {
             timeout = setTimeout(later, wait);
         };
     }
-
-    // Format currency
-    static formatCurrency(amount) {
-        return new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND'
-        }).format(amount);
-    }
-
-    // Format date
-    static formatDate(date) {
-        return new Intl.DateTimeFormat('vi-VN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        }).format(new Date(date));
-    }
-
-    // New methods for updated admin layout
-    toggleTheme() {
-        document.body.classList.toggle('dark-theme');
-        const isDark = document.body.classList.contains('dark-theme');
-        localStorage.setItem('adminTheme', isDark ? 'dark' : 'light');
-        
-        // Update theme icon
-        const themeBtn = document.querySelector('#themeToggle i');
-        if (themeBtn) {
-            themeBtn.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-        }
-    }
-
-    handleSearch(event) {
-        const query = event.target.value.toLowerCase();
-        if (query.length === 0) {
-            this.clearSearchResults();
-            return;
-        }
-
-        // Debounce search
-        clearTimeout(this.searchTimeout);
-        this.searchTimeout = setTimeout(() => {
-            this.performSearch(query);
-        }, 300);
-    }
-
-    performSearch(query) {
-        // Search in tables
-        const tables = document.querySelectorAll('table tbody');
-        tables.forEach(tbody => {
-            const rows = tbody.querySelectorAll('tr');
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(query) ? '' : 'none';
-            });
-        });
-
-        // Search in cards
-        const cards = document.querySelectorAll('.card');
-        cards.forEach(card => {
-            const text = card.textContent.toLowerCase();
-            card.style.display = text.includes(query) ? '' : 'none';
-        });
-    }
-
-    clearSearchResults() {
-        // Show all hidden elements
-        document.querySelectorAll('[style*="display: none"]').forEach(el => {
-            el.style.display = '';
-        });
-    }
-
-    closeMobileMenu() {
-        const sidebar = document.querySelector('.admin-sidebar');
-        if (sidebar) {
-            sidebar.classList.remove('show');
-        }
-    }
 }
 
-// Initialize admin dashboard when DOM is loaded
+// CSS Animation classes
+const animationCSS = `
+    .animate-fade-in-up {
+        animation: fadeInUp 0.6s ease-out forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    @keyframes fadeInUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .notification-toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+    }
+`;
+
+// Inject animation CSS
+const style = document.createElement('style');
+style.textContent = animationCSS;
+document.head.appendChild(style);
+
+// Initialize dashboard when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    window.adminDashboard = new AdminDashboard();
-    
-    // Load saved sidebar state
-    const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-    if (sidebarCollapsed) {
-        document.querySelector('.admin-sidebar').classList.add('collapsed');
-        document.querySelector('.admin-main-content').classList.add('expanded');
-    }
-    
-    // Load saved theme
-    const savedTheme = localStorage.getItem('adminTheme');
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-theme');
-    }
+    window.adminDashboard = new ModernAdminDashboard();
 });
 
-// Export for use in other scripts
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = AdminDashboard;
-}
+// Export for global access
+window.ModernAdminDashboard = ModernAdminDashboard;
