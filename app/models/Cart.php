@@ -86,12 +86,10 @@ class Cart {
         
         $query = "SELECT cd.*, p.name, p.price, p.description,
                          (cd.quantity * p.price) as subtotal,
-                         i.image_url
+                         (SELECT image_url FROM images WHERE product_id = p.product_id LIMIT 1) as image_url
                   FROM " . $this->detail_table . " cd
                   JOIN products p ON cd.product_id = p.product_id
-                  LEFT JOIN images i ON p.product_id = i.product_id
-                  WHERE cd.cart_id = :cart_id
-                  GROUP BY cd.cart_detail_id";
+                  WHERE cd.cart_id = :cart_id";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':cart_id', $cart_id);

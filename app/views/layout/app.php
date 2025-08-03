@@ -48,7 +48,7 @@
                 <ul class="navbar-nav">
                     <?php if (SessionHelper::isLoggedIn()): ?>
                         <?php $user = SessionHelper::getCurrentUser(); ?>
-                        
+
                         <?php if (SessionHelper::isCustomer()): ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="/cart">
@@ -59,18 +59,43 @@
                                 <a class="nav-link" href="/orders">Đơn hàng</a>
                             </li>
                         <?php endif; ?>
-                        
+
+                        <!-- Notification Bell -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link notification-bell" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-bell"></i>
+                                <span class="notification-badge badge bg-danger" style="display: none;">0</span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown" style="width: 350px; max-height: 400px; overflow-y: auto;">
+                                <div class="dropdown-header d-flex justify-content-between align-items-center">
+                                    <span>Thông báo</span>
+                                    <button class="btn btn-sm btn-link mark-all-read p-0">Đánh dấu tất cả đã đọc</button>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <div class="notifications-list">
+                                    <div class="text-center text-muted p-3">Đang tải...</div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <div class="dropdown-footer text-center">
+                                    <a href="/notifications" class="btn btn-sm btn-primary">Xem tất cả</a>
+                                </div>
+                            </div>
+                        </li>
+
                         <?php if (SessionHelper::isAdmin()): ?>
                             <li class="nav-item">
                                 <a class="nav-link" href="/admin">Quản trị</a>
                             </li>
                         <?php endif; ?>
-                        
+
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                                 <i class="fas fa-user"></i> <?php echo htmlspecialchars($user->full_name); ?>
                             </a>
                             <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/notifications">Thông báo</a></li>
+                                <li><a class="dropdown-item" href="/notification-settings">Cài đặt thông báo</a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="/logout">Đăng xuất</a></li>
                             </ul>
                         </li>
@@ -140,10 +165,21 @@
     <!-- Custom JavaScript -->
     <script src="/assets/js/app.js"></script>
     <script src="/assets/js/animations.js"></script>
-    
+
+    <!-- Notification System -->
+    <?php if (SessionHelper::isLoggedIn()): ?>
+    <script src="/assets/js/notifications.js"></script>
+    <script>
+        // Set current user ID for notifications
+        window.currentUserId = <?php echo SessionHelper::getCurrentUser()->user_id; ?>;
+    </script>
+    <?php endif; ?>
+
     <!-- Authentication JavaScript (only for auth pages) -->
     <?php if (isset($title) && (strpos($title, 'Đăng nhập') !== false || strpos($title, 'Đăng ký') !== false)): ?>
     <script src="/assets/js/auth.js"></script>
     <?php endif; ?>
+
+
 </body>
 </html>

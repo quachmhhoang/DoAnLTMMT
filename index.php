@@ -28,6 +28,23 @@ $router->post('/checkout', 'OrderController', 'placeOrder', 'customer');
 $router->get('/orders', 'OrderController', 'myOrders', 'customer');
 $router->get('/orders/{id}', 'OrderController', 'orderDetail', 'auth');
 
+// Notification routes
+$router->get('/notifications', 'NotificationController', 'index', 'auth');
+$router->get('/notification-settings', 'NotificationController', 'settings', 'auth');
+
+// Notification API routes
+$router->get('/api/notifications', 'NotificationController', 'getNotifications', 'auth');
+$router->get('/api/notifications/unread-count', 'NotificationController', 'getUnreadCount', 'auth');
+$router->post('/api/notifications/mark-read', 'NotificationController', 'markAsRead', 'auth');
+$router->post('/api/notifications/mark-all-read', 'NotificationController', 'markAllAsRead', 'auth');
+$router->get('/api/notifications/settings', 'NotificationController', 'getSettings', 'auth');
+$router->post('/api/notifications/settings', 'NotificationController', 'updateSettings', 'auth');
+$router->post('/api/notifications/push-subscription', 'NotificationController', 'savePushSubscription', 'auth');
+$router->post('/api/notifications/remove-subscription', 'NotificationController', 'removePushSubscription', 'auth');
+$router->post('/api/notifications/create', 'NotificationController', 'create', 'admin');
+
+// SSE endpoint is accessed directly via sse-notifications.php
+
 // Admin routes
 $router->get('/admin', 'AdminController', 'dashboard', 'admin');
 
