@@ -1,279 +1,326 @@
 <?php
+
 require_once __DIR__ . '/../models/Notification.php';
 
-class NotificationService {
-    private $notification;
+class NotificationService
+{
+    private $notificationModel;
     private $websocketUrl;
-    
-    public function __construct() {
-        $this->notification = new Notification();
-        $this->websocketUrl = 'ws://localhost:8080';
+    private $websocketPort;
+
+    public function __construct($websocketUrl = 'localhost', $websocketPort = 8080)
+    {
+        $this->notificationModel = new Notification();
+        $this->websocketUrl = $websocketUrl;
+        $this->websocketPort = $websocketPort;
     }
-    
-    // Gửi thông báo đơn hàng mới cho admin
-    public function sendNewOrderNotification($order_id, $user_name, $total_amount) {
-        $title = "Đơn hàng mới #$order_id";
-        $message = "Khách hàng $user_name vừa đặt đơn hàng trị giá " . number_format($total_amount, 0, ',', '.') . " VNĐ";
-        $data = json_encode([
-            'order_id' => $order_id,
-            'action' => 'new_order',
-            'url' => "/admin/orders/$order_id"
-        ]);
-        
-        // Tạo thông báo trong database (gửi cho admin - user_id = null)
-        $notification_id = $this->notification->create(null, $title, $message, 'order', $data);
-        
-        if ($notification_id) {
-            // Gửi qua WebSocket cho admin
-            $this->sendWebSocketNotification([
-                'id' => $notification_id,
+
+    /**
+     * Send notification to specific user
+     */
+    public function sendToUser($userId, $title, $message, $type = 'system', $data = null, $createdBy = null)
+    {
+        // Check if user has enabled this type of notification
+        if (!$this->isNotificationEnabled($userId, $type)) {
+            return false; // User has disabled this type of notification
+        }
+
+        // Save to database
+        $notificationId = $this->notificationModel->createForUser($userId, $title, $message, $type, $data, $createdBy);
+
+        if ($notificationId) {
+            // Send via WebSocket
+            $notification = [
+                'id' => $notificationId,
                 'title' => $title,
                 'message' => $message,
-                'type' => 'order',
-                'data' => json_decode($data, true),
-                'target' => 'admin'
-            ]);
-            
-            return true;
+                'type' => $type,
+                'data' => $data,
+                'created_at' => date('Y-m-d H:i:s'),
+                'target_type' => 'user',
+                'user_id' => $userId
+            ];
+
+            $this->sendWebSocketNotification('user', $userId, $notification);
+            return $notificationId;
         }
-        
+
         return false;
     }
-    
-    // Gửi thông báo cập nhật trạng thái đơn hàng cho khách hàng
-    public function sendOrderStatusNotification($user_id, $order_id, $status, $status_text) {
-        $title = "Cập nhật đơn hàng #$order_id";
-        $message = "Trạng thái đơn hàng của bạn đã được cập nhật: $status_text";
-        $data = json_encode([
-            'order_id' => $order_id,
+
+    /**
+     * Send notification to all users
+     */
+    public function sendToAll($title, $message, $type = 'system', $data = null, $createdBy = null)
+    {
+        // Save to database
+        $notificationId = $this->notificationModel->createForAll($title, $message, $type, $data, $createdBy);
+        
+        if ($notificationId) {
+            // Send via WebSocket
+            $notification = [
+                'id' => $notificationId,
+                'title' => $title,
+                'message' => $message,
+                'type' => $type,
+                'data' => $data,
+                'created_at' => date('Y-m-d H:i:s'),
+                'target_type' => 'all'
+            ];
+
+            $this->sendWebSocketNotification('all', null, $notification);
+            return $notificationId;
+        }
+
+        return false;
+    }
+
+    /**
+     * Send notification to users with specific role
+     */
+    public function sendToRole($role, $title, $message, $type = 'system', $data = null, $createdBy = null)
+    {
+        // Save to database
+        $notificationId = $this->notificationModel->createForRole($role, $title, $message, $type, $data, $createdBy);
+        
+        if ($notificationId) {
+            // Send via WebSocket
+            $notification = [
+                'id' => $notificationId,
+                'title' => $title,
+                'message' => $message,
+                'type' => $type,
+                'data' => $data,
+                'created_at' => date('Y-m-d H:i:s'),
+                'target_type' => 'role',
+                'role' => $role
+            ];
+
+            $this->sendWebSocketNotification('role', $role, $notification);
+            return $notificationId;
+        }
+
+        return false;
+    }
+
+    /**
+     * Send WebSocket notification to the notification server
+     */
+    private function sendWebSocketNotification($targetType, $targetValue, $notification)
+    {
+        try {
+            // Create a simple HTTP request to notify the WebSocket server
+            // In a production environment, you might want to use a message queue
+            $postData = json_encode([
+                'action' => 'send_notification',
+                'target_type' => $targetType,
+                'target_value' => $targetValue,
+                'notification' => $notification
+            ]);
+
+            $context = stream_context_create([
+                'http' => [
+                    'method' => 'POST',
+                    'header' => 'Content-Type: application/json',
+                    'content' => $postData,
+                    'timeout' => 5
+                ]
+            ]);
+
+            // Try to send to WebSocket server's HTTP endpoint
+            $result = @file_get_contents("http://{$this->websocketUrl}:8081/notify", false, $context);
+            
+            if ($result === false) {
+                error_log("Failed to send WebSocket notification");
+            }
+        } catch (Exception $e) {
+            error_log("WebSocket notification error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Order-related notifications
+     */
+    public function notifyOrderCreated($orderId, $userId, $totalAmount)
+    {
+        $title = "Đơn hàng mới";
+        $message = "Đơn hàng #{$orderId} đã được tạo thành công với tổng giá trị " . number_format($totalAmount, 0, ',', '.') . " VNĐ";
+        $data = [
+            'order_id' => $orderId,
+            'total_amount' => $totalAmount,
+            'action_url' => "/orders/{$orderId}"
+        ];
+
+        // Notify customer
+        $this->sendToUser($userId, $title, $message, 'order', $data);
+
+        // Notify admins
+        $adminTitle = "Đơn hàng mới từ khách hàng";
+        $adminMessage = "Có đơn hàng mới #{$orderId} với giá trị " . number_format($totalAmount, 0, ',', '.') . " VNĐ";
+        $this->sendToRole('admin', $adminTitle, $adminMessage, 'order', $data);
+    }
+
+    public function notifyOrderStatusChanged($orderId, $userId, $status)
+    {
+        $statusMessages = [
+            'processing' => 'đang được xử lý',
+            'shipped' => 'đã được giao cho đơn vị vận chuyển',
+            'delivered' => 'đã được giao thành công',
+            'cancelled' => 'đã bị hủy'
+        ];
+
+        $statusMessage = $statusMessages[$status] ?? $status;
+        $title = "Cập nhật đơn hàng";
+        $message = "Đơn hàng #{$orderId} {$statusMessage}";
+        $data = [
+            'order_id' => $orderId,
             'status' => $status,
-            'action' => 'order_status_update',
-            'url' => "/orders/$order_id"
-        ]);
-        
-        // Tạo thông báo trong database
-        $notification_id = $this->notification->create($user_id, $title, $message, 'order', $data);
-        
-        if ($notification_id) {
-            // Gửi qua WebSocket
-            $this->sendWebSocketNotification([
-                'id' => $notification_id,
-                'title' => $title,
-                'message' => $message,
-                'type' => 'order',
-                'data' => json_decode($data, true),
-                'user_id' => $user_id
-            ]);
-            
-            // Gửi push notification nếu user đã đăng ký
-            $this->sendPushNotification($user_id, $title, $message, [
-                'url' => "/orders/$order_id",
-                'order_id' => $order_id
-            ]);
-            
-            return true;
-        }
-        
-        return false;
+            'action_url' => "/orders/{$orderId}"
+        ];
+
+        $this->sendToUser($userId, $title, $message, 'order', $data);
     }
-    
-    // Gửi thông báo xác nhận đơn hàng cho khách hàng
-    public function sendOrderConfirmationNotification($user_id, $order_id, $total_amount) {
-        $title = "Đặt hàng thành công!";
-        $message = "Cảm ơn bạn đã đặt hàng. Đơn hàng #$order_id trị giá " . number_format($total_amount, 0, ',', '.') . " VNĐ đã được xác nhận.";
-        $data = json_encode([
-            'order_id' => $order_id,
-            'action' => 'order_confirmation',
-            'url' => "/orders/$order_id"
-        ]);
-        
-        // Tạo thông báo trong database
-        $notification_id = $this->notification->create($user_id, $title, $message, 'success', $data);
-        
-        if ($notification_id) {
-            // Gửi qua WebSocket
-            $this->sendWebSocketNotification([
-                'id' => $notification_id,
-                'title' => $title,
-                'message' => $message,
-                'type' => 'success',
-                'data' => json_decode($data, true),
-                'user_id' => $user_id
-            ]);
-            
-            // Gửi push notification
-            $this->sendPushNotification($user_id, $title, $message, [
-                'url' => "/orders/$order_id",
-                'order_id' => $order_id
-            ]);
-            
-            return true;
-        }
-        
-        return false;
+
+    /**
+     * Product-related notifications
+     */
+    public function notifyProductAdded($productId, $productName)
+    {
+        $title = "Sản phẩm mới";
+        $message = "Sản phẩm mới '{$productName}' đã được thêm vào cửa hàng";
+        $data = [
+            'product_id' => $productId,
+            'action_url' => "/products/{$productId}"
+        ];
+
+        $this->sendToAll($title, $message, 'product', $data);
     }
-    
-    // Gửi thông báo khuyến mãi
-    public function sendPromotionNotification($title, $message, $user_id = null) {
-        $data = json_encode([
-            'action' => 'promotion',
-            'url' => "/products"
-        ]);
-        
-        // Tạo thông báo trong database
-        $notification_id = $this->notification->create($user_id, $title, $message, 'info', $data);
-        
-        if ($notification_id) {
-            // Gửi qua WebSocket
-            $this->sendWebSocketNotification([
-                'id' => $notification_id,
-                'title' => $title,
-                'message' => $message,
-                'type' => 'info',
-                'data' => json_decode($data, true),
-                'user_id' => $user_id
-            ]);
-            
-            // Gửi push notification
-            if ($user_id) {
-                $this->sendPushNotification($user_id, $title, $message, [
-                    'url' => "/products"
-                ]);
-            }
-            
-            return true;
-        }
-        
-        return false;
+
+    public function notifyProductLowStock($productId, $productName, $currentStock)
+    {
+        $title = "Cảnh báo tồn kho";
+        $message = "Sản phẩm '{$productName}' chỉ còn {$currentStock} sản phẩm trong kho";
+        $data = [
+            'product_id' => $productId,
+            'current_stock' => $currentStock,
+            'action_url' => "/admin/products/edit/{$productId}"
+        ];
+
+        $this->sendToRole('admin', $title, $message, 'product', $data);
     }
-    
-    // Gửi thông báo hệ thống
-    public function sendSystemNotification($title, $message, $user_id = null) {
-        $data = json_encode([
-            'action' => 'system',
-            'url' => "/"
-        ]);
-        
-        // Tạo thông báo trong database
-        $notification_id = $this->notification->create($user_id, $title, $message, 'system', $data);
-        
-        if ($notification_id) {
-            // Gửi qua WebSocket
-            $this->sendWebSocketNotification([
-                'id' => $notification_id,
-                'title' => $title,
-                'message' => $message,
-                'type' => 'system',
-                'data' => json_decode($data, true),
-                'user_id' => $user_id
-            ]);
-            
-            return true;
-        }
-        
-        return false;
+
+    /**
+     * Promotion-related notifications
+     */
+    public function notifyPromotion($title, $message, $promotionData = null)
+    {
+        $this->sendToAll($title, $message, 'promotion', $promotionData);
     }
-    
-    // Gửi thông báo qua WebSocket
-    private function sendWebSocketNotification($notificationData) {
-        try {
-            // Trong thực tế, bạn sẽ cần một cách để gửi dữ liệu đến WebSocket server
-            // Ở đây chúng ta sẽ sử dụng một file tạm thời hoặc Redis để giao tiếp
-            
-            // Tạo file tạm thời để WebSocket server đọc
-            $tempFile = sys_get_temp_dir() . '/websocket_notification_' . uniqid() . '.json';
-            file_put_contents($tempFile, json_encode($notificationData));
-            
-            // Hoặc bạn có thể sử dụng cURL để gửi đến một endpoint của WebSocket server
-            // $this->sendToWebSocketEndpoint($notificationData);
-            
-            return true;
-        } catch (Exception $e) {
-            error_log("Failed to send WebSocket notification: " . $e->getMessage());
-            return false;
-        }
-    }
-    
-    // Gửi push notification
-    private function sendPushNotification($user_id, $title, $message, $data = []) {
-        try {
-            // Lấy push subscriptions của user
-            $subscriptions = $this->notification->getUserPushSubscriptions($user_id);
-            
-            if (empty($subscriptions)) {
-                return false;
-            }
-            
-            // Chuẩn bị payload
-            $payload = json_encode([
-                'title' => $title,
-                'body' => $message,
-                'icon' => '/assets/images/icon-192x192.png',
-                'badge' => '/assets/images/badge-72x72.png',
-                'data' => array_merge($data, [
-                    'timestamp' => time(),
-                    'notificationId' => uniqid()
-                ])
-            ]);
-            
-            // Gửi đến từng subscription
-            foreach ($subscriptions as $subscription) {
-                $this->sendPushToSubscription($subscription, $payload);
-            }
-            
-            return true;
-        } catch (Exception $e) {
-            error_log("Failed to send push notification: " . $e->getMessage());
-            return false;
-        }
-    }
-    
-    // Gửi push notification đến một subscription cụ thể
-    private function sendPushToSubscription($subscription, $payload) {
-        // Trong thực tế, bạn sẽ cần sử dụng thư viện như web-push-php
-        // Ở đây chúng ta chỉ mô phỏng việc gửi
+
+    /**
+     * System notifications
+     */
+    public function notifySystemMaintenance($message, $scheduledTime = null)
+    {
+        $title = "Bảo trì hệ thống";
+        $data = $scheduledTime ? ['scheduled_time' => $scheduledTime] : null;
         
-        try {
-            // Mô phỏng gửi push notification
-            // Trong thực tế, bạn sẽ sử dụng VAPID keys và gửi đến endpoint của browser
-            
-            $endpoint = $subscription->endpoint;
-            $p256dh = $subscription->p256dh_key;
-            $auth = $subscription->auth_key;
-            
-            // Log để debug
-            error_log("Sending push notification to: " . $endpoint);
-            error_log("Payload: " . $payload);
-            
-            // TODO: Implement actual push notification sending using web-push library
-            
-            return true;
-        } catch (Exception $e) {
-            error_log("Failed to send push to subscription: " . $e->getMessage());
-            return false;
-        }
+        $this->sendToAll($title, $message, 'system', $data);
     }
-    
-    // Lấy thống kê thông báo
-    public function getNotificationStats() {
-        try {
-            $conn = $this->notification->conn ?? (new Database())->getConnection();
-            
-            $query = "SELECT 
-                        COUNT(*) as total,
-                        SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as unread,
-                        SUM(CASE WHEN type = 'order' THEN 1 ELSE 0 END) as orders,
-                        SUM(CASE WHEN type = 'system' THEN 1 ELSE 0 END) as system,
-                        SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR) THEN 1 ELSE 0 END) as last_24h
-                      FROM notifications";
-            
-            $stmt = $conn->prepare($query);
-            $stmt->execute();
-            
-            return $stmt->fetch(PDO::FETCH_OBJ);
-        } catch (Exception $e) {
-            error_log("Failed to get notification stats: " . $e->getMessage());
-            return null;
-        }
+
+    /**
+     * Admin notifications
+     */
+    public function notifyAdminAction($title, $message, $data = null, $createdBy = null)
+    {
+        $this->sendToRole('admin', $title, $message, 'admin', $data, $createdBy);
+    }
+
+    /**
+     * Get notifications for a user
+     */
+    public function getUserNotifications($userId, $limit = 20, $offset = 0)
+    {
+        return $this->notificationModel->getByUserId($userId, $limit, $offset);
+    }
+
+    /**
+     * Get unread count for a user
+     */
+    public function getUnreadCount($userId)
+    {
+        return $this->notificationModel->getUnreadCount($userId);
+    }
+
+    /**
+     * Mark notification as read
+     */
+    public function markAsRead($notificationId, $userId = null)
+    {
+        return $this->notificationModel->markAsRead($notificationId, $userId);
+    }
+
+    /**
+     * Mark all notifications as read for a user
+     */
+    public function markAllAsRead($userId)
+    {
+        return $this->notificationModel->markAllAsRead($userId);
+    }
+
+    /**
+     * Get all notifications for admin (with pagination and filtering)
+     */
+    public function getAllNotifications($limit = 50, $offset = 0, $type = '')
+    {
+        return $this->notificationModel->getAllNotifications($limit, $offset, $type);
+    }
+
+    /**
+     * Get total notification count for admin
+     */
+    public function getTotalNotificationCount($type = '')
+    {
+        return $this->notificationModel->getTotalNotificationCount($type);
+    }
+
+    /**
+     * Delete notification (admin only)
+     */
+    public function deleteNotification($notificationId)
+    {
+        return $this->notificationModel->deleteNotification($notificationId);
+    }
+
+    /**
+     * Get notification statistics
+     */
+    public function getNotificationStats()
+    {
+        return $this->notificationModel->getNotificationStats();
+    }
+
+    /**
+     * Get user notification settings
+     */
+    public function getUserSettings($userId)
+    {
+        return $this->notificationModel->getUserSettings($userId);
+    }
+
+    /**
+     * Update user notification settings
+     */
+    public function updateUserSettings($userId, $settings)
+    {
+        return $this->notificationModel->updateUserSettings($userId, $settings);
+    }
+
+    /**
+     * Check if user has enabled notifications for a specific type
+     */
+    public function isNotificationEnabled($userId, $type)
+    {
+        return $this->notificationModel->isNotificationEnabled($userId, $type);
     }
 }

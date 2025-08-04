@@ -46,7 +46,8 @@ class Product {
                   LEFT JOIN categories c ON p.category_id = c.category_id
                   LEFT JOIN brands b ON p.brand_id = b.brand_id
                   LEFT JOIN images i ON p.product_id = i.product_id
-                  GROUP BY p.product_id
+                  GROUP BY p.product_id, p.name, p.price, p.description, p.category_id, p.brand_id,
+                           c.name, b.brand_name
                   ORDER BY p.product_id DESC";
         
         if($limit) {
@@ -78,7 +79,8 @@ class Product {
                   LEFT JOIN brands b ON p.brand_id = b.brand_id
                   LEFT JOIN images i ON p.product_id = i.product_id
                   WHERE p.product_id = :product_id
-                  GROUP BY p.product_id";
+                  GROUP BY p.product_id, p.name, p.price, p.description, p.category_id, p.brand_id,
+                           c.name, b.brand_name";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':product_id', $id);
@@ -95,7 +97,8 @@ class Product {
                   LEFT JOIN brands b ON p.brand_id = b.brand_id
                   LEFT JOIN images i ON p.product_id = i.product_id
                   WHERE p.category_id = :category_id
-                  GROUP BY p.product_id
+                  GROUP BY p.product_id, p.name, p.price, p.description, p.category_id, p.brand_id,
+                           c.name, b.brand_name
                   ORDER BY p.product_id DESC";
         
         if($limit) {
@@ -122,7 +125,8 @@ class Product {
                   LEFT JOIN brands b ON p.brand_id = b.brand_id
                   LEFT JOIN images i ON p.product_id = i.product_id
                   WHERE p.name LIKE :keyword OR p.description LIKE :keyword
-                  GROUP BY p.product_id
+                  GROUP BY p.product_id, p.name, p.price, p.description, p.category_id, p.brand_id,
+                           c.name, b.brand_name
                   ORDER BY p.product_id DESC";
         
         $stmt = $this->conn->prepare($query);

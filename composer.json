@@ -1,12 +1,5 @@
 {
     "require": {
-        "cboden/ratchet": "^0.4.4",
-        "react/socket": "^1.12",
-        "react/http": "^1.7"
-    },
-    "autoload": {
-        "psr-4": {
-            "App\\": "app/"
-        }
+        "cboden/ratchet": "^0.4.4"
     }
 }

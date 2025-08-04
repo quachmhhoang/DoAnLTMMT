@@ -28,23 +28,6 @@ $router->post('/checkout', 'OrderController', 'placeOrder', 'customer');
 $router->get('/orders', 'OrderController', 'myOrders', 'customer');
 $router->get('/orders/{id}', 'OrderController', 'orderDetail', 'auth');
 
-// Notification routes
-$router->get('/notifications', 'NotificationController', 'index', 'auth');
-$router->get('/notification-settings', 'NotificationController', 'settings', 'auth');
-
-// Notification API routes
-$router->get('/api/notifications', 'NotificationController', 'getNotifications', 'auth');
-$router->get('/api/notifications/unread-count', 'NotificationController', 'getUnreadCount', 'auth');
-$router->post('/api/notifications/mark-read', 'NotificationController', 'markAsRead', 'auth');
-$router->post('/api/notifications/mark-all-read', 'NotificationController', 'markAllAsRead', 'auth');
-$router->get('/api/notifications/settings', 'NotificationController', 'getSettings', 'auth');
-$router->post('/api/notifications/settings', 'NotificationController', 'updateSettings', 'auth');
-$router->post('/api/notifications/push-subscription', 'NotificationController', 'savePushSubscription', 'auth');
-$router->post('/api/notifications/remove-subscription', 'NotificationController', 'removePushSubscription', 'auth');
-$router->post('/api/notifications/create', 'NotificationController', 'create', 'admin');
-
-// SSE endpoint is accessed directly via sse-notifications.php
-
 // Admin routes
 $router->get('/admin', 'AdminController', 'dashboard', 'admin');
 
@@ -72,6 +55,12 @@ $router->get('/admin/brands/edit/{id}', 'AdminController', 'editBrand', 'admin')
 $router->post('/admin/brands/edit/{id}', 'AdminController', 'editBrand', 'admin');
 $router->get('/admin/brands/delete/{id}', 'AdminController', 'deleteBrand', 'admin');
 
+// Admin promotion routes
+$router->get('/admin/promotions', 'AdminController', 'promotions', 'admin');
+$router->get('/admin/promotions/add', 'AdminController', 'addPromotion', 'admin');
+$router->post('/admin/promotions/add', 'AdminController', 'addPromotion', 'admin');
+$router->get('/admin/promotions/delete/{id}', 'AdminController', 'deletePromotion', 'admin');
+
 // Admin order routes
 $router->get('/admin/orders', 'AdminController', 'orders', 'admin');
 $router->get('/admin/orders/delete/{id}', 'AdminController', 'deleteOrder', 'admin');
@@ -79,6 +68,24 @@ $router->get('/admin/orders/delete/{id}', 'AdminController', 'deleteOrder', 'adm
 // Admin user routes
 $router->get('/admin/users', 'AdminController', 'users', 'admin');
 $router->get('/admin/users/delete/{id}', 'AdminController', 'deleteUser', 'admin');
+
+// Admin notification routes
+$router->get('/admin/notifications', 'NotificationController', 'adminIndex', 'admin');
+$router->get('/api/admin/notifications', 'NotificationController', 'getAllNotifications', 'admin');
+$router->post('/api/admin/notifications/send', 'NotificationController', 'sendCustomNotification', 'admin');
+$router->post('/api/admin/notifications/delete', 'NotificationController', 'deleteNotification', 'admin');
+
+// Notification API routes
+$router->get('/api/notifications', 'NotificationController', 'getNotifications', 'auth');
+$router->post('/api/notifications/mark-read', 'NotificationController', 'markAsRead', 'auth');
+$router->post('/api/notifications/mark-all-read', 'NotificationController', 'markAllAsRead', 'auth');
+$router->get('/api/notifications/unread-count', 'NotificationController', 'getUnreadCount', 'auth');
+$router->post('/api/notifications/test', 'NotificationController', 'sendTestNotification', 'admin');
+
+// Notification settings routes
+$router->get('/notifications/settings', 'NotificationController', 'settings', 'auth');
+$router->get('/api/notifications/settings', 'NotificationController', 'getSettings', 'auth');
+$router->post('/api/notifications/settings', 'NotificationController', 'updateSettings', 'auth');
 
 // Dispatch the request
 $router->dispatch();

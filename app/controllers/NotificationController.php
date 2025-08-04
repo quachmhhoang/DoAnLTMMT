@@ -1,350 +1,447 @@
 <?php
-require_once __DIR__ . '/../models/Notification.php';
+
+require_once __DIR__ . '/../services/NotificationService.php';
 require_once __DIR__ . '/../helpers/SessionHelper.php';
-require_once __DIR__ . '/../middleware/RateLimitMiddleware.php';
-require_once __DIR__ . '/../middleware/SecurityMiddleware.php';
 
-class NotificationController {
-    
-    // Lấy danh sách thông báo của user
-    public function getNotifications() {
+class NotificationController
+{
+    private $notificationService;
+
+    public function __construct()
+    {
+        $this->notificationService = new NotificationService();
+    }
+
+    /**
+     * Get notifications for current user (AJAX endpoint)
+     */
+    public function getNotifications()
+    {
+        if (!SessionHelper::isLoggedIn()) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
+        }
+
+        $user = SessionHelper::getCurrentUser();
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
+        $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
+
         try {
-            if (!SessionHelper::isLoggedIn()) {
-                http_response_code(401);
-                echo json_encode(['error' => 'Unauthorized', 'debug' => 'User not logged in']);
-                return;
-            }
+            $notifications = $this->notificationService->getUserNotifications($user->user_id, $limit, $offset);
+            $unreadCount = $this->notificationService->getUnreadCount($user->user_id);
 
-            $user = SessionHelper::getCurrentUser();
-
-            if (!$user) {
-                http_response_code(401);
-                echo json_encode(['error' => 'User not found', 'debug' => 'getCurrentUser returned null']);
-                return;
-            }
-
-            // Temporarily disable middleware for debugging
-            try {
-                // Apply rate limiting
-                if (class_exists('RateLimitMiddleware')) {
-                    RateLimitMiddleware::checkNotificationAPI($user->user_id);
-                }
-
-                // Check for suspicious activity
-                if (class_exists('SecurityMiddleware')) {
-                    SecurityMiddleware::checkSuspiciousActivity($user->user_id);
-                }
-            } catch (Exception $e) {
-                // Log middleware errors but don't fail the request
-                error_log("Middleware error: " . $e->getMessage());
-            }
-
-            $notification = new Notification();
-
-            $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-            $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
-            $offset = ($page - 1) * $limit;
-
-            // Add filter support
-            $filter = isset($_GET['filter']) ? $_GET['filter'] : 'all';
-            $typeFilter = isset($_GET['type']) ? $_GET['type'] : 'all';
-
-            $notifications = $notification->getUserNotifications($user->user_id, $limit, $offset);
-            $unreadCount = $notification->getUnreadCount($user->user_id);
-
-            // Apply filters
-            if ($filter === 'unread') {
-                $notifications = array_filter($notifications, function($n) { return !$n->is_read; });
-            } elseif ($filter === 'read') {
-                $notifications = array_filter($notifications, function($n) { return $n->is_read; });
-            }
-
-            if ($typeFilter !== 'all') {
-                $notifications = array_filter($notifications, function($n) use ($typeFilter) {
-                    return $n->type === $typeFilter;
-                });
-            }
-
-            // Convert to array to ensure proper JSON encoding
-            $notifications = array_values($notifications);
-
-            header('Content-Type: application/json');
             echo json_encode([
+                'success' => true,
                 'notifications' => $notifications,
-                'unreadCount' => $unreadCount,
-                'page' => $page,
-                'limit' => $limit,
-                'filter' => $filter,
-                'typeFilter' => $typeFilter,
-                'debug' => [
-                    'user_id' => $user->user_id,
-                    'total_found' => count($notifications),
-                    'sql_offset' => $offset
-                ]
+                'unread_count' => $unreadCount
             ]);
-
         } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode([
-                'error' => 'Internal server error',
-                'message' => $e->getMessage(),
-                'debug' => [
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => $e->getTraceAsString()
-                ]
-            ]);
+            echo json_encode(['error' => 'Failed to fetch notifications']);
         }
     }
-    
-    // Đánh dấu thông báo đã đọc
-    public function markAsRead() {
+
+    /**
+     * Mark notification as read (AJAX endpoint)
+     */
+    public function markAsRead()
+    {
         if (!SessionHelper::isLoggedIn()) {
             http_response_code(401);
             echo json_encode(['error' => 'Unauthorized']);
             return;
         }
-        
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['error' => 'Method not allowed']);
             return;
         }
-        
+
         $user = SessionHelper::getCurrentUser();
-        $notification = new Notification();
-        
         $input = json_decode(file_get_contents('php://input'), true);
-        $notification_id = isset($input['notification_id']) ? (int)$input['notification_id'] : 0;
-        
-        if (!$notification_id) {
+        $notificationId = isset($input['notification_id']) ? (int)$input['notification_id'] : 0;
+
+        if (!$notificationId) {
             http_response_code(400);
-            echo json_encode(['error' => 'Notification ID required']);
+            echo json_encode(['error' => 'Invalid notification ID']);
             return;
         }
-        
-        $result = $notification->markAsRead($notification_id, $user->user_id);
-        
-        header('Content-Type: application/json');
-        echo json_encode(['success' => $result]);
-    }
-    
-    // Đánh dấu tất cả thông báo đã đọc
-    public function markAllAsRead() {
-        if (!SessionHelper::isLoggedIn()) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            return;
-        }
-        
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(['error' => 'Method not allowed']);
-            return;
-        }
-        
-        $user = SessionHelper::getCurrentUser();
-        $notification = new Notification();
-        
-        $result = $notification->markAllAsRead($user->user_id);
-        
-        header('Content-Type: application/json');
-        echo json_encode(['success' => $result]);
-    }
-    
-    // Lấy số lượng thông báo chưa đọc
-    public function getUnreadCount() {
-        if (!SessionHelper::isLoggedIn()) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            return;
-        }
-        
-        $user = SessionHelper::getCurrentUser();
-        $notification = new Notification();
-        
-        $count = $notification->getUnreadCount($user->user_id);
-        
-        header('Content-Type: application/json');
-        echo json_encode(['count' => $count]);
-    }
-    
-    // Lấy cài đặt thông báo
-    public function getSettings() {
-        if (!SessionHelper::isLoggedIn()) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            return;
-        }
-        
-        $user = SessionHelper::getCurrentUser();
-        $notification = new Notification();
-        
-        $settings = $notification->getUserSettings($user->user_id);
-        
-        header('Content-Type: application/json');
-        echo json_encode($settings);
-    }
-    
-    // Cập nhật cài đặt thông báo
-    public function updateSettings() {
-        if (!SessionHelper::isLoggedIn()) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            return;
-        }
-        
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(['error' => 'Method not allowed']);
-            return;
-        }
-        
-        $user = SessionHelper::getCurrentUser();
-        $notification = new Notification();
-        
-        $input = json_decode(file_get_contents('php://input'), true);
-        
-        $result = $notification->updateSettings($user->user_id, $input);
-        
-        header('Content-Type: application/json');
-        echo json_encode(['success' => $result]);
-    }
-    
-    // Lưu push subscription
-    public function savePushSubscription() {
-        if (!SessionHelper::isLoggedIn()) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            return;
-        }
-        
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(['error' => 'Method not allowed']);
-            return;
-        }
-        
-        $user = SessionHelper::getCurrentUser();
-        $notification = new Notification();
-        
-        $input = json_decode(file_get_contents('php://input'), true);
-        
-        $required = ['endpoint', 'keys'];
-        foreach ($required as $field) {
-            if (!isset($input[$field])) {
-                http_response_code(400);
-                echo json_encode(['error' => "Field $field is required"]);
-                return;
+
+        try {
+            $result = $this->notificationService->markAsRead($notificationId, $user->user_id);
+            
+            if ($result) {
+                echo json_encode(['success' => true]);
+            } else {
+                http_response_code(404);
+                echo json_encode(['error' => 'Notification not found']);
             }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to mark notification as read']);
         }
-        
-        $endpoint = $input['endpoint'];
-        $p256dh_key = $input['keys']['p256dh'] ?? '';
-        $auth_key = $input['keys']['auth'] ?? '';
-        $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? null;
-        
-        $result = $notification->savePushSubscription($user->user_id, $endpoint, $p256dh_key, $auth_key, $user_agent);
-        
-        header('Content-Type: application/json');
-        echo json_encode(['success' => $result]);
     }
-    
-    // Xóa push subscription
-    public function removePushSubscription() {
+
+    /**
+     * Mark all notifications as read (AJAX endpoint)
+     */
+    public function markAllAsRead()
+    {
         if (!SessionHelper::isLoggedIn()) {
             http_response_code(401);
             echo json_encode(['error' => 'Unauthorized']);
             return;
         }
-        
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['error' => 'Method not allowed']);
             return;
         }
-        
+
         $user = SessionHelper::getCurrentUser();
-        $notification = new Notification();
-        
-        $input = json_decode(file_get_contents('php://input'), true);
-        $endpoint = $input['endpoint'] ?? '';
-        
-        if (!$endpoint) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Endpoint is required']);
-            return;
+
+        try {
+            $result = $this->notificationService->markAllAsRead($user->user_id);
+            
+            if ($result) {
+                echo json_encode(['success' => true]);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Failed to mark notifications as read']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to mark notifications as read']);
         }
-        
-        $result = $notification->removePushSubscription($user->user_id, $endpoint);
-        
-        header('Content-Type: application/json');
-        echo json_encode(['success' => $result]);
     }
-    
-    // Tạo thông báo mới (cho admin)
-    public function create() {
+
+    /**
+     * Send test notification (Admin only)
+     */
+    public function sendTestNotification()
+    {
         if (!SessionHelper::isAdmin()) {
             http_response_code(403);
-            echo json_encode(['error' => 'Forbidden']);
+            echo json_encode(['error' => 'Access denied']);
             return;
         }
-        
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['error' => 'Method not allowed']);
             return;
         }
-        
-        $notification = new Notification();
+
         $input = json_decode(file_get_contents('php://input'), true);
-        
-        $required = ['title', 'message'];
-        foreach ($required as $field) {
-            if (!isset($input[$field]) || empty($input[$field])) {
-                http_response_code(400);
-                echo json_encode(['error' => "Field $field is required"]);
+        $title = $input['title'] ?? 'Test Notification';
+        $message = $input['message'] ?? 'This is a test notification';
+        $type = $input['type'] ?? 'system';
+        $target = $input['target'] ?? 'all';
+
+        $currentUser = SessionHelper::getCurrentUser();
+
+        try {
+            switch ($target) {
+                case 'all':
+                    $result = $this->notificationService->sendToAll($title, $message, $type, null, $currentUser->user_id);
+                    break;
+                case 'admin':
+                    $result = $this->notificationService->sendToRole('admin', $title, $message, $type, null, $currentUser->user_id);
+                    break;
+                case 'customer':
+                    $result = $this->notificationService->sendToRole('customer', $title, $message, $type, null, $currentUser->user_id);
+                    break;
+                default:
+                    // Send to specific user
+                    if (is_numeric($target)) {
+                        $result = $this->notificationService->sendToUser($target, $title, $message, $type, null, $currentUser->user_id);
+                    } else {
+                        throw new Exception('Invalid target');
+                    }
+            }
+
+            if ($result) {
+                echo json_encode(['success' => true, 'notification_id' => $result]);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Failed to send notification']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to send notification: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Get unread count (AJAX endpoint)
+     */
+    public function getUnreadCount()
+    {
+        if (!SessionHelper::isLoggedIn()) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
+        }
+
+        $user = SessionHelper::getCurrentUser();
+
+        try {
+            $count = $this->notificationService->getUnreadCount($user->user_id);
+            echo json_encode(['success' => true, 'count' => $count]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to get unread count']);
+        }
+    }
+
+    /**
+     * Admin notification management page
+     */
+    public function adminIndex()
+    {
+        if (!SessionHelper::isAdmin()) {
+            header('Location: /login');
+            exit();
+        }
+
+        include __DIR__ . '/../views/admin/notifications/index.php';
+    }
+
+    /**
+     * Get all notifications for admin (AJAX endpoint)
+     */
+    public function getAllNotifications()
+    {
+        if (!SessionHelper::isAdmin()) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Access denied']);
+            return;
+        }
+
+        // Check if requesting statistics
+        if (isset($_GET['stats'])) {
+            try {
+                $stats = $this->notificationService->getNotificationStats();
+                echo json_encode([
+                    'success' => true,
+                    'stats' => $stats
+                ]);
+                return;
+            } catch (Exception $e) {
+                http_response_code(500);
+                echo json_encode(['error' => 'Failed to fetch statistics']);
                 return;
             }
         }
-        
-        $user_id = $input['user_id'] ?? null; // null = gửi cho tất cả
-        $title = $input['title'];
-        $message = $input['message'];
-        $type = $input['type'] ?? 'info';
-        $data = isset($input['data']) ? json_encode($input['data']) : null;
-        
-        $notification_id = $notification->create($user_id, $title, $message, $type, $data);
-        
-        if ($notification_id) {
-            // TODO: Gửi thông báo qua WebSocket và Push Notification
-            header('Content-Type: application/json');
-            echo json_encode(['success' => true, 'notification_id' => $notification_id]);
-        } else {
+
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
+        $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
+        $type = isset($_GET['type']) ? $_GET['type'] : '';
+
+        try {
+            $notifications = $this->notificationService->getAllNotifications($limit, $offset, $type);
+            $totalCount = $this->notificationService->getTotalNotificationCount($type);
+
+            echo json_encode([
+                'success' => true,
+                'notifications' => $notifications,
+                'total_count' => $totalCount,
+                'current_page' => floor($offset / $limit) + 1,
+                'total_pages' => ceil($totalCount / $limit)
+            ]);
+        } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to create notification']);
+            echo json_encode(['error' => 'Failed to fetch notifications']);
         }
     }
-    
-    // Hiển thị trang thông báo
-    public function index() {
+
+    /**
+     * Send custom notification (Admin only)
+     */
+    public function sendCustomNotification()
+    {
+        if (!SessionHelper::isAdmin()) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Access denied']);
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $title = trim($input['title'] ?? '');
+        $message = trim($input['message'] ?? '');
+        $type = $input['type'] ?? 'system';
+        $target = $input['target'] ?? 'all';
+        $targetValue = $input['target_value'] ?? null;
+
+        if (empty($title) || empty($message)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Title and message are required']);
+            return;
+        }
+
+        $currentUser = SessionHelper::getCurrentUser();
+
+        try {
+            $result = false;
+
+            switch ($target) {
+                case 'all':
+                    $result = $this->notificationService->sendToAll($title, $message, $type, null, $currentUser->user_id);
+                    break;
+                case 'role':
+                    if (!$targetValue) {
+                        throw new Exception('Role is required for role-based notifications');
+                    }
+                    $result = $this->notificationService->sendToRole($targetValue, $title, $message, $type, null, $currentUser->user_id);
+                    break;
+                case 'user':
+                    if (!$targetValue || !is_numeric($targetValue)) {
+                        throw new Exception('Valid user ID is required for user-specific notifications');
+                    }
+                    $result = $this->notificationService->sendToUser($targetValue, $title, $message, $type, null, $currentUser->user_id);
+                    break;
+                default:
+                    throw new Exception('Invalid target type');
+            }
+
+            if ($result) {
+                echo json_encode(['success' => true, 'notification_id' => $result]);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Failed to send notification']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to send notification: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Delete notification (Admin only)
+     */
+    public function deleteNotification()
+    {
+        if (!SessionHelper::isAdmin()) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Access denied']);
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $notificationId = isset($input['notification_id']) ? (int)$input['notification_id'] : 0;
+
+        if (!$notificationId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid notification ID']);
+            return;
+        }
+
+        try {
+            $result = $this->notificationService->deleteNotification($notificationId);
+
+            if ($result) {
+                echo json_encode(['success' => true]);
+            } else {
+                http_response_code(404);
+                echo json_encode(['error' => 'Notification not found']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to delete notification']);
+        }
+    }
+
+    /**
+     * Show notification settings page
+     */
+    public function settings()
+    {
         if (!SessionHelper::isLoggedIn()) {
             header('Location: /login');
             exit();
         }
-        
-        $title = 'Thông báo';
-        include __DIR__ . '/../views/notification/index.php';
+
+        include __DIR__ . '/../views/notifications/settings.php';
     }
-    
-    // Hiển thị trang cài đặt thông báo
-    public function settings() {
+
+    /**
+     * Get user notification settings (AJAX endpoint)
+     */
+    public function getSettings()
+    {
         if (!SessionHelper::isLoggedIn()) {
-            header('Location: /login');
-            exit();
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
         }
-        
-        $title = 'Cài đặt thông báo';
-        include __DIR__ . '/../views/notification/settings.php';
+
+        $user = SessionHelper::getCurrentUser();
+
+        try {
+            $settings = $this->notificationService->getUserSettings($user->user_id);
+            echo json_encode([
+                'success' => true,
+                'settings' => $settings
+            ]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to fetch settings']);
+        }
+    }
+
+    /**
+     * Update user notification settings (AJAX endpoint)
+     */
+    public function updateSettings()
+    {
+        if (!SessionHelper::isLoggedIn()) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        $user = SessionHelper::getCurrentUser();
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        if (!isset($input['settings']) || !is_array($input['settings'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid settings data']);
+            return;
+        }
+
+        try {
+            $result = $this->notificationService->updateUserSettings($user->user_id, $input['settings']);
+
+            if ($result) {
+                echo json_encode(['success' => true]);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Failed to update settings']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to update settings: ' . $e->getMessage()]);
+        }
     }
 }

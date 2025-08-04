@@ -48,12 +48,6 @@ class OrderController {
                 exit();
             }
             
-            // Tính tổng tiền
-            $total = 0;
-            foreach($cartItems as $item) {
-                $total += $item->quantity * $item->price;
-            }
-
             // Tạo đơn hàng
             $order_id = $order->create($user->user_id, $cartItems);
 
@@ -61,14 +55,14 @@ class OrderController {
                 // Xóa giỏ hàng sau khi đặt hàng thành công
                 $cart->clearCart($user->user_id);
 
-                // Gửi thông báo
-                $notificationService = new NotificationService();
-
-                // Thông báo cho khách hàng
-                $notificationService->sendOrderConfirmationNotification($user->user_id, $order_id, $total);
-
-                // Thông báo cho admin
-                $notificationService->sendNewOrderNotification($order_id, $user->full_name, $total);
+                // Gửi thông báo đơn hàng mới
+                try {
+                    $orderInfo = $order->getOrderById($order_id);
+                    $notificationService = new NotificationService();
+                    $notificationService->notifyOrderCreated($order_id, $user->user_id, $orderInfo->total_amount);
+                } catch (Exception $e) {
+                    error_log("Failed to send order notification: " . $e->getMessage());
+                }
 
                 SessionHelper::setFlash('success', 'Đặt hàng thành công! Mã đơn hàng: #' . $order_id);
                 header('Location: /orders/' . $order_id);

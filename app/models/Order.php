@@ -80,12 +80,14 @@ class Order {
 
     // Lấy chi tiết đơn hàng
     public function getOrderDetails($order_id) {
-        $query = "SELECT od.*, p.name, p.description,
-                         (SELECT image_url FROM images WHERE product_id = p.product_id LIMIT 1) as image_url
+        $query = "SELECT od.*, p.name, p.description, MIN(i.image_url) as image_url
                   FROM " . $this->detail_table . " od
                   JOIN products p ON od.product_id = p.product_id
-                  WHERE od.order_id = :order_id";
-
+                  LEFT JOIN images i ON p.product_id = i.product_id
+                  WHERE od.order_id = :order_id
+                  GROUP BY od.order_detail_id, od.order_id, od.product_id, od.quantity, od.total_price,
+                           p.name, p.description";
+        
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':order_id', $order_id);
         $stmt->execute();

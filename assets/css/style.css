@@ -1055,151 +1055,61 @@ main.container {
     }
 }
 
-/* Notification System Styles */
-.notification-bell {
-    position: relative;
+/* WebSocket Notification Styles */
+.ws-connection-status.connected {
+    color: #28a745;
 }
 
-.notification-badge {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    font-size: 0.75rem;
-    min-width: 18px;
-    height: 18px;
-    border-radius: 9px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.ws-connection-status.disconnected {
+    color: #dc3545;
 }
 
 .notification-dropdown {
     border: none;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    border-radius: 8px;
-}
-
-.notification-dropdown .dropdown-header {
-    background: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-    font-weight: 600;
-    padding: 12px 16px;
-}
-
-.notification-dropdown .dropdown-footer {
-    background: #f8f9fa;
-    border-top: 1px solid #dee2e6;
-    padding: 8px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
 .notification-item {
-    border: none;
-    border-bottom: 1px solid #f0f0f0;
-    border-radius: 0;
-    margin-bottom: 0;
-    padding: 12px 16px;
-    background: #fff;
-    transition: all 0.3s ease;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #dee2e6;
     cursor: pointer;
-    position: relative;
+    transition: background-color 0.2s;
 }
 
 .notification-item:hover {
-    background: #f8f9fa;
-}
-
-.notification-item:last-child {
-    border-bottom: none;
+    background-color: #f8f9fa;
 }
 
 .notification-item.unread {
-    background: #f8f9ff;
-    border-left: 3px solid #007bff;
-}
-
-.notification-item.unread::before {
-    content: '';
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    width: 8px;
-    height: 8px;
-    background: #007bff;
-    border-radius: 50%;
+    background-color: #e3f2fd;
+    border-left: 3px solid #2196f3;
 }
 
 .notification-title {
     font-weight: 600;
-    color: #333;
-    margin-bottom: 4px;
     font-size: 0.9rem;
+    margin-bottom: 0.25rem;
 }
 
 .notification-message {
-    color: #666;
-    margin-bottom: 4px;
-    line-height: 1.4;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
 }
 
 .notification-time {
     font-size: 0.75rem;
-    color: #999;
+    color: #adb5bd;
 }
 
-.notification-type-badge {
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 10px;
+.notification-badge {
     font-size: 0.7rem;
-    font-weight: 500;
-    margin-bottom: 4px;
+    min-width: 1.2rem;
+    height: 1.2rem;
+    line-height: 1.2rem;
 }
 
-.notification-type-order {
-    background: #e3f2fd;
-    color: #1976d2;
-}
-
-.notification-type-system {
-    background: #f3e5f5;
-    color: #7b1fa2;
-}
-
-.notification-type-info {
-    background: #e8f5e8;
-    color: #388e3c;
-}
-
-.notification-type-warning {
-    background: #fff3e0;
-    color: #f57c00;
-}
-
-.notification-type-error {
-    background: #ffebee;
-    color: #d32f2f;
-}
-
-.notification-type-success {
-    background: #e8f5e8;
-    color: #388e3c;
-}
-
-.mark-all-read {
-    color: #007bff;
-    text-decoration: none;
-    font-size: 0.875rem;
-    border: none;
-    background: none;
-    padding: 0;
-}
-
-.mark-all-read:hover {
-    color: #0056b3;
-    text-decoration: underline;
-}
-
+/* Notification Toast Styles */
 .notification-toast {
     animation: slideInRight 0.3s ease-out;
 }
@@ -1215,22 +1125,23 @@ main.container {
     }
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .notification-dropdown {
-        width: 300px !important;
-        max-width: 90vw !important;
-    }
+/* Notification Types */
+.notification-item.type-order {
+    border-left-color: #28a745;
+}
 
-    .notification-item {
-        padding: 10px 12px;
-    }
+.notification-item.type-product {
+    border-left-color: #17a2b8;
+}
 
-    .notification-title {
-        font-size: 0.85rem;
-    }
+.notification-item.type-promotion {
+    border-left-color: #ffc107;
+}
 
-    .notification-message {
-        font-size: 0.8rem;
-    }
+.notification-item.type-system {
+    border-left-color: #6c757d;
+}
+
+.notification-item.type-admin {
+    border-left-color: #007bff;
 }

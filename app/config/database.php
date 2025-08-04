@@ -15,11 +15,8 @@ class Database{
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
                 PDO::ATTR_EMULATE_PREPARES => false
             ];
-
+            
             $this->conn = new PDO($dsn, $this->username, $this->password, $options);
-
-            // Set SQL mode to be more permissive for GROUP BY
-            $this->conn->exec("SET sql_mode = 'STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO'");
             
             // Verify connection
             if ($this->conn) {

@@ -1,252 +1,394 @@
 <?php
+
 require_once __DIR__ . '/../config/database.php';
 
-class Notification {
-    public $conn; // Make it public for NotificationService access
+class Notification
+{
+    private $conn;
     private $table_name = "notifications";
-    private $settings_table = "notification_settings";
-    private $subscriptions_table = "push_subscriptions";
 
-    public $notification_id;
-    public $user_id;
-    public $title;
-    public $message;
-    public $type;
-    public $is_read;
-    public $created_at;
-    public $read_at;
-    public $data;
-
-    public function __construct() {
+    public function __construct()
+    {
         $database = new Database();
         $this->conn = $database->getConnection();
     }
 
-    // Tạo thông báo mới
-    public function create($user_id, $title, $message, $type = 'info', $data = null) {
+    /**
+     * Create a new notification
+     */
+    public function create($data)
+    {
         $query = "INSERT INTO " . $this->table_name . " 
-                  (user_id, title, message, type, data) 
-                  VALUES (:user_id, :title, :message, :type, :data)";
-        
+                  (title, message, type, target_type, target_value, user_id, created_by, data) 
+                  VALUES (:title, :message, :type, :target_type, :target_value, :user_id, :created_by, :data)";
+
         $stmt = $this->conn->prepare($query);
-        
-        $stmt->bindParam(':user_id', $user_id);
-        $stmt->bindParam(':title', $title);
-        $stmt->bindParam(':message', $message);
-        $stmt->bindParam(':type', $type);
-        $stmt->bindParam(':data', $data);
-        
+
+        // Bind parameters
+        $stmt->bindParam(':title', $data['title']);
+        $stmt->bindParam(':message', $data['message']);
+        $stmt->bindParam(':type', $data['type']);
+        $stmt->bindParam(':target_type', $data['target_type']);
+        $stmt->bindParam(':target_value', $data['target_value']);
+        $stmt->bindParam(':user_id', $data['user_id']);
+        $stmt->bindParam(':created_by', $data['created_by']);
+        $stmt->bindParam(':data', $data['data']);
+
         if ($stmt->execute()) {
             return $this->conn->lastInsertId();
         }
-        
+
         return false;
     }
 
-    // Lấy thông báo của user
-    public function getUserNotifications($user_id, $limit = 20, $offset = 0) {
+    /**
+     * Get notifications for a specific user
+     */
+    public function getByUserId($userId, $limit = 20, $offset = 0)
+    {
         $query = "SELECT * FROM " . $this->table_name . " 
-                  WHERE user_id = :user_id OR user_id IS NULL 
+                  WHERE (target_type = 'user' AND user_id = :user_id) 
+                     OR (target_type = 'all') 
+                     OR (target_type = 'role' AND target_value = (
+                         SELECT role FROM users WHERE user_id = :user_id2
+                     ))
                   ORDER BY created_at DESC 
                   LIMIT :limit OFFSET :offset";
-        
+
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->bindParam(':user_id2', $userId, PDO::PARAM_INT);
         $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_OBJ);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Lấy số lượng thông báo chưa đọc
-    public function getUnreadCount($user_id) {
+    /**
+     * Get unread notifications count for a user
+     */
+    public function getUnreadCount($userId)
+    {
         $query = "SELECT COUNT(*) as count FROM " . $this->table_name . " 
-                  WHERE (user_id = :user_id OR user_id IS NULL) AND is_read = 0";
-        
+                  WHERE is_read = FALSE 
+                    AND ((target_type = 'user' AND user_id = :user_id) 
+                         OR (target_type = 'all') 
+                         OR (target_type = 'role' AND target_value = (
+                             SELECT role FROM users WHERE user_id = :user_id2
+                         )))";
+
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':user_id', $user_id);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->bindParam(':user_id2', $userId, PDO::PARAM_INT);
+
         $stmt->execute();
-        
-        $result = $stmt->fetch(PDO::FETCH_OBJ);
-        return $result->count;
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['count'];
     }
 
-    // Đánh dấu thông báo đã đọc
-    public function markAsRead($notification_id, $user_id = null) {
+    /**
+     * Mark notification as read
+     */
+    public function markAsRead($notificationId, $userId = null)
+    {
         $query = "UPDATE " . $this->table_name . " 
-                  SET is_read = 1, read_at = NOW() 
+                  SET is_read = TRUE, read_at = NOW() 
                   WHERE notification_id = :notification_id";
-        
-        if ($user_id) {
-            $query .= " AND (user_id = :user_id OR user_id IS NULL)";
+
+        if ($userId) {
+            $query .= " AND (user_id = :user_id OR target_type IN ('all', 'role'))";
         }
-        
+
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':notification_id', $notification_id);
+        $stmt->bindParam(':notification_id', $notificationId, PDO::PARAM_INT);
         
-        if ($user_id) {
-            $stmt->bindParam(':user_id', $user_id);
+        if ($userId) {
+            $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
         }
-        
+
         return $stmt->execute();
     }
 
-    // Đánh dấu tất cả thông báo đã đọc
-    public function markAllAsRead($user_id) {
+    /**
+     * Mark all notifications as read for a user
+     */
+    public function markAllAsRead($userId)
+    {
         $query = "UPDATE " . $this->table_name . " 
-                  SET is_read = 1, read_at = NOW() 
-                  WHERE (user_id = :user_id OR user_id IS NULL) AND is_read = 0";
-        
+                  SET is_read = TRUE, read_at = NOW() 
+                  WHERE is_read = FALSE 
+                    AND ((target_type = 'user' AND user_id = :user_id) 
+                         OR (target_type = 'all') 
+                         OR (target_type = 'role' AND target_value = (
+                             SELECT role FROM users WHERE user_id = :user_id2
+                         )))";
+
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':user_id', $user_id);
-        
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->bindParam(':user_id2', $userId, PDO::PARAM_INT);
+
         return $stmt->execute();
     }
 
-    // Xóa thông báo
-    public function delete($notification_id) {
+    /**
+     * Delete notification
+     */
+    public function delete($notificationId)
+    {
         $query = "DELETE FROM " . $this->table_name . " WHERE notification_id = :notification_id";
-        
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':notification_id', $notification_id);
-        
+        $stmt->bindParam(':notification_id', $notificationId, PDO::PARAM_INT);
+
         return $stmt->execute();
     }
 
-    // Lấy cài đặt thông báo của user
-    public function getUserSettings($user_id) {
-        $query = "SELECT * FROM " . $this->settings_table . " WHERE user_id = :user_id";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':user_id', $user_id);
-        $stmt->execute();
-        
-        $result = $stmt->fetch(PDO::FETCH_OBJ);
-        
-        // Nếu chưa có cài đặt, tạo mặc định
-        if (!$result) {
-            $this->createDefaultSettings($user_id);
-            return $this->getUserSettings($user_id);
-        }
-        
-        return $result;
-    }
-
-    // Tạo cài đặt mặc định
-    private function createDefaultSettings($user_id) {
-        $query = "INSERT INTO " . $this->settings_table . " (user_id) VALUES (:user_id)";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':user_id', $user_id);
-        
-        return $stmt->execute();
-    }
-
-    // Cập nhật cài đặt thông báo
-    public function updateSettings($user_id, $settings) {
-        $query = "UPDATE " . $this->settings_table . " SET ";
-        $params = [];
-        $setParts = [];
-        
-        foreach ($settings as $key => $value) {
-            if (in_array($key, ['push_enabled', 'email_enabled', 'order_notifications', 'system_notifications', 'marketing_notifications'])) {
-                $setParts[] = "$key = :$key";
-                $params[$key] = $value;
-            }
-        }
-        
-        if (empty($setParts)) {
-            return false;
-        }
-        
-        $query .= implode(', ', $setParts) . " WHERE user_id = :user_id";
-        $params['user_id'] = $user_id;
-        
-        $stmt = $this->conn->prepare($query);
-        
-        foreach ($params as $key => $value) {
-            $stmt->bindValue(":$key", $value);
-        }
-        
-        return $stmt->execute();
-    }
-
-    // Lưu push subscription
-    public function savePushSubscription($user_id, $endpoint, $p256dh_key, $auth_key, $user_agent = null) {
-        // Kiểm tra xem subscription đã tồn tại chưa
-        $checkQuery = "SELECT subscription_id FROM " . $this->subscriptions_table . " 
-                       WHERE user_id = :user_id AND endpoint = :endpoint";
-        
-        $checkStmt = $this->conn->prepare($checkQuery);
-        $checkStmt->bindParam(':user_id', $user_id);
-        $checkStmt->bindParam(':endpoint', $endpoint);
-        $checkStmt->execute();
-        
-        if ($checkStmt->fetch()) {
-            // Cập nhật thời gian sử dụng cuối
-            $updateQuery = "UPDATE " . $this->subscriptions_table . " 
-                           SET last_used = NOW() 
-                           WHERE user_id = :user_id AND endpoint = :endpoint";
-            
-            $updateStmt = $this->conn->prepare($updateQuery);
-            $updateStmt->bindParam(':user_id', $user_id);
-            $updateStmt->bindParam(':endpoint', $endpoint);
-            
-            return $updateStmt->execute();
-        }
-        
-        // Tạo subscription mới
-        $query = "INSERT INTO " . $this->subscriptions_table . " 
-                  (user_id, endpoint, p256dh_key, auth_key, user_agent) 
-                  VALUES (:user_id, :endpoint, :p256dh_key, :auth_key, :user_agent)";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':user_id', $user_id);
-        $stmt->bindParam(':endpoint', $endpoint);
-        $stmt->bindParam(':p256dh_key', $p256dh_key);
-        $stmt->bindParam(':auth_key', $auth_key);
-        $stmt->bindParam(':user_agent', $user_agent);
-        
-        return $stmt->execute();
-    }
-
-    // Lấy push subscriptions của user
-    public function getUserPushSubscriptions($user_id) {
-        $query = "SELECT * FROM " . $this->subscriptions_table . " WHERE user_id = :user_id";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':user_id', $user_id);
-        $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_OBJ);
-    }
-
-    // Xóa push subscription
-    public function removePushSubscription($user_id, $endpoint) {
-        $query = "DELETE FROM " . $this->subscriptions_table . " 
-                  WHERE user_id = :user_id AND endpoint = :endpoint";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':user_id', $user_id);
-        $stmt->bindParam(':endpoint', $endpoint);
-        
-        return $stmt->execute();
-    }
-
-    // Lấy tất cả thông báo (cho admin)
-    public function getAllNotifications($limit = 50, $offset = 0) {
-        $query = "SELECT n.*, u.full_name as user_name 
+    /**
+     * Get all notifications (admin view)
+     */
+    public function getAll($limit = 50, $offset = 0)
+    {
+        $query = "SELECT n.*, u.username as created_by_username 
                   FROM " . $this->table_name . " n 
-                  LEFT JOIN users u ON n.user_id = u.user_id 
+                  LEFT JOIN users u ON n.created_by = u.user_id 
                   ORDER BY n.created_at DESC 
                   LIMIT :limit OFFSET :offset";
-        
+
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_OBJ);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Create notification for specific user
+     */
+    public function createForUser($userId, $title, $message, $type = 'system', $data = null, $createdBy = null)
+    {
+        return $this->create([
+            'title' => $title,
+            'message' => $message,
+            'type' => $type,
+            'target_type' => 'user',
+            'target_value' => null,
+            'user_id' => $userId,
+            'created_by' => $createdBy,
+            'data' => $data ? json_encode($data) : null
+        ]);
+    }
+
+    /**
+     * Create notification for all users
+     */
+    public function createForAll($title, $message, $type = 'system', $data = null, $createdBy = null)
+    {
+        return $this->create([
+            'title' => $title,
+            'message' => $message,
+            'type' => $type,
+            'target_type' => 'all',
+            'target_value' => null,
+            'user_id' => null,
+            'created_by' => $createdBy,
+            'data' => $data ? json_encode($data) : null
+        ]);
+    }
+
+    /**
+     * Create notification for users with specific role
+     */
+    public function createForRole($role, $title, $message, $type = 'system', $data = null, $createdBy = null)
+    {
+        return $this->create([
+            'title' => $title,
+            'message' => $message,
+            'type' => $type,
+            'target_type' => 'role',
+            'target_value' => $role,
+            'user_id' => null,
+            'created_by' => $createdBy,
+            'data' => $data ? json_encode($data) : null
+        ]);
+    }
+
+    /**
+     * Get notification by ID
+     */
+    public function getById($notificationId)
+    {
+        $query = "SELECT * FROM " . $this->table_name . " WHERE notification_id = :notification_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':notification_id', $notificationId, PDO::PARAM_INT);
+
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Get all notifications for admin with pagination and filtering
+     */
+    public function getAllNotifications($limit = 50, $offset = 0, $type = '')
+    {
+        $whereClause = '';
+        if (!empty($type)) {
+            $whereClause = "WHERE type = :type";
+        }
+
+        $query = "SELECT n.*, u.username as created_by_username
+                  FROM " . $this->table_name . " n
+                  LEFT JOIN users u ON n.created_by = u.user_id
+                  {$whereClause}
+                  ORDER BY n.created_at DESC
+                  LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->conn->prepare($query);
+
+        if (!empty($type)) {
+            $stmt->bindParam(':type', $type);
+        }
+
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get total notification count for admin
+     */
+    public function getTotalNotificationCount($type = '')
+    {
+        $whereClause = '';
+        if (!empty($type)) {
+            $whereClause = "WHERE type = :type";
+        }
+
+        $query = "SELECT COUNT(*) as total FROM " . $this->table_name . " {$whereClause}";
+        $stmt = $this->conn->prepare($query);
+
+        if (!empty($type)) {
+            $stmt->bindParam(':type', $type);
+        }
+
+        $stmt->execute();
+        $row = $stmt->fetch();
+        return $row->total;
+    }
+
+    /**
+     * Delete notification (admin only)
+     */
+    public function deleteNotification($notificationId)
+    {
+        $query = "DELETE FROM " . $this->table_name . " WHERE notification_id = :notification_id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':notification_id', $notificationId);
+
+        return $stmt->execute();
+    }
+
+    /**
+     * Get notification statistics
+     */
+    public function getNotificationStats()
+    {
+        $query = "SELECT
+                    COUNT(*) as total_notifications,
+                    COUNT(CASE WHEN is_read = FALSE THEN 1 END) as unread_notifications,
+                    COUNT(CASE WHEN type = 'order' THEN 1 END) as order_notifications,
+                    COUNT(CASE WHEN type = 'product' THEN 1 END) as product_notifications,
+                    COUNT(CASE WHEN type = 'promotion' THEN 1 END) as promotion_notifications,
+                    COUNT(CASE WHEN type = 'system' THEN 1 END) as system_notifications,
+                    COUNT(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR) THEN 1 END) as notifications_24h,
+                    COUNT(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as notifications_7d
+                  FROM " . $this->table_name;
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
+    /**
+     * Get user notification settings
+     */
+    public function getUserSettings($userId)
+    {
+        $query = "SELECT notification_type, is_enabled
+                  FROM notification_settings
+                  WHERE user_id = :user_id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':user_id', $userId);
+        $stmt->execute();
+
+        $settings = [];
+        while ($row = $stmt->fetch()) {
+            $settings[$row->notification_type] = (bool)$row->is_enabled;
+        }
+
+        // Ensure all notification types are present
+        $defaultTypes = ['order', 'product', 'promotion', 'system', 'admin'];
+        foreach ($defaultTypes as $type) {
+            if (!isset($settings[$type])) {
+                $settings[$type] = true; // Default to enabled
+            }
+        }
+
+        return $settings;
+    }
+
+    /**
+     * Update user notification settings
+     */
+    public function updateUserSettings($userId, $settings)
+    {
+        try {
+            $this->conn->beginTransaction();
+
+            foreach ($settings as $type => $enabled) {
+                $query = "INSERT INTO notification_settings (user_id, notification_type, is_enabled)
+                          VALUES (:user_id, :type, :enabled)
+                          ON DUPLICATE KEY UPDATE is_enabled = :enabled2";
+
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(':user_id', $userId);
+                $stmt->bindParam(':type', $type);
+                $stmt->bindParam(':enabled', $enabled, PDO::PARAM_BOOL);
+                $stmt->bindParam(':enabled2', $enabled, PDO::PARAM_BOOL);
+                $stmt->execute();
+            }
+
+            $this->conn->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            return false;
+        }
+    }
+
+    /**
+     * Check if user has enabled notifications for a specific type
+     */
+    public function isNotificationEnabled($userId, $type)
+    {
+        $query = "SELECT is_enabled FROM notification_settings
+                  WHERE user_id = :user_id AND notification_type = :type";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':user_id', $userId);
+        $stmt->bindParam(':type', $type);
+        $stmt->execute();
+
+        if ($stmt->rowCount() > 0) {
+            $row = $stmt->fetch();
+            return (bool)$row->is_enabled;
+        }
+
+        // Default to enabled if no setting found
+        return true;
     }
 }
