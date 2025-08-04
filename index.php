@@ -1,92 +1,103 @@
 <?php
-require_once __DIR__ . '/app/core/Router.php';
-require_once __DIR__ . '/app/helpers/SessionHelper.php';
+/**
+ * File index.php - Entry point chính của ứng dụng
+ * Định nghĩa tất cả các routes và dispatch request đến controller tương ứng
+ */
 
-// Khởi tạo router
+// Import các file cần thiết
+require_once __DIR__ . '/app/core/Router.php';        // Router class để xử lý routing
+require_once __DIR__ . '/app/helpers/SessionHelper.php';  // Helper xử lý session
+
+// Khởi tạo router instance
 $router = new Router();
 
-// Public routes
-$router->get('/', 'HomeController', 'index');
-$router->get('/products', 'HomeController', 'products');
-$router->get('/products/{id}', 'HomeController', 'productDetail');
+// ===== PUBLIC ROUTES (không cần đăng nhập) =====
+$router->get('/', 'HomeController', 'index');                    // Trang chủ
+$router->get('/products', 'HomeController', 'products');         // Danh sách sản phẩm
+$router->get('/products/{id}', 'HomeController', 'productDetail'); // Chi tiết sản phẩm
 
-// Auth routes
-$router->get('/login', 'AuthController', 'showLogin', 'guest');
-$router->post('/login', 'AuthController', 'login', 'guest');
-$router->get('/register', 'AuthController', 'showRegister', 'guest');
-$router->post('/register', 'AuthController', 'register', 'guest');
-$router->get('/logout', 'AuthController', 'logout');
+// ===== AUTHENTICATION ROUTES =====
+$router->get('/login', 'AuthController', 'showLogin', 'guest');      // Hiển thị form đăng nhập (chỉ guest)
+$router->post('/login', 'AuthController', 'login', 'guest');         // Xử lý đăng nhập (chỉ guest)
+$router->get('/register', 'AuthController', 'showRegister', 'guest'); // Hiển thị form đăng ký (chỉ guest)
+$router->post('/register', 'AuthController', 'register', 'guest');    // Xử lý đăng ký (chỉ guest)
+$router->get('/logout', 'AuthController', 'logout');                 // Đăng xuất
 
-// Customer routes
-$router->post('/add-to-cart', 'HomeController', 'addToCart', 'customer');
-$router->get('/cart', 'HomeController', 'cart', 'customer');
-$router->post('/cart/update', 'HomeController', 'updateCart', 'customer');
+// ===== CUSTOMER ROUTES (cần đăng nhập với role customer) =====
+$router->post('/add-to-cart', 'HomeController', 'addToCart', 'customer');  // Thêm sản phẩm vào giỏ hàng
+$router->get('/cart', 'HomeController', 'cart', 'customer');               // Xem giỏ hàng
+$router->post('/cart/update', 'HomeController', 'updateCart', 'customer'); // Cập nhật giỏ hàng
 
-// Order routes
-$router->get('/checkout', 'OrderController', 'checkout', 'customer');
-$router->post('/checkout', 'OrderController', 'placeOrder', 'customer');
-$router->get('/orders', 'OrderController', 'myOrders', 'customer');
-$router->get('/orders/{id}', 'OrderController', 'orderDetail', 'auth');
+// ===== ORDER ROUTES =====
+$router->get('/checkout', 'OrderController', 'checkout', 'customer');     // Trang thanh toán (customer)
+$router->post('/checkout', 'OrderController', 'placeOrder', 'customer');  // Đặt hàng (customer)
+$router->get('/orders', 'OrderController', 'myOrders', 'customer');       // Đơn hàng của tôi (customer)
+$router->get('/orders/{id}', 'OrderController', 'orderDetail', 'auth');   // Chi tiết đơn hàng (đã đăng nhập)
 
-// Admin routes
-$router->get('/admin', 'AdminController', 'dashboard', 'admin');
+// ===== ADMIN ROUTES (cần đăng nhập với role admin) =====
+$router->get('/admin', 'AdminController', 'dashboard', 'admin');  // Dashboard admin
 
-// Admin product routes
-$router->get('/admin/products', 'AdminController', 'products', 'admin');
-$router->get('/admin/products/add', 'AdminController', 'addProduct', 'admin');
-$router->post('/admin/products/add', 'AdminController', 'addProduct', 'admin');
-$router->get('/admin/products/edit/{id}', 'AdminController', 'editProduct', 'admin');
-$router->post('/admin/products/edit/{id}', 'AdminController', 'editProduct', 'admin');
-$router->get('/admin/products/delete/{id}', 'AdminController', 'deleteProduct', 'admin');
+// ===== ADMIN PRODUCT MANAGEMENT =====
+$router->get('/admin/products', 'AdminController', 'products', 'admin');              // Danh sách sản phẩm
+$router->get('/admin/products/add', 'AdminController', 'addProduct', 'admin');        // Form thêm sản phẩm
+$router->post('/admin/products/add', 'AdminController', 'addProduct', 'admin');       // Xử lý thêm sản phẩm
+$router->get('/admin/products/edit/{id}', 'AdminController', 'editProduct', 'admin'); // Form sửa sản phẩm
+$router->post('/admin/products/edit/{id}', 'AdminController', 'editProduct', 'admin');// Xử lý sửa sản phẩm
+$router->get('/admin/products/delete/{id}', 'AdminController', 'deleteProduct', 'admin'); // Xóa sản phẩm
 
-// Admin category routes
-$router->get('/admin/categories', 'AdminController', 'categories', 'admin');
-$router->get('/admin/categories/add', 'AdminController', 'addCategory', 'admin');
-$router->post('/admin/categories/add', 'AdminController', 'addCategory', 'admin');
-$router->get('/admin/categories/edit/{id}', 'AdminController', 'editCategory', 'admin');
-$router->post('/admin/categories/edit/{id}', 'AdminController', 'editCategory', 'admin');
-$router->get('/admin/categories/delete/{id}', 'AdminController', 'deleteCategory', 'admin');
+// ===== ADMIN CATEGORY MANAGEMENT =====
+$router->get('/admin/categories', 'AdminController', 'categories', 'admin');              // Danh sách danh mục
+$router->get('/admin/categories/add', 'AdminController', 'addCategory', 'admin');         // Form thêm danh mục
+$router->post('/admin/categories/add', 'AdminController', 'addCategory', 'admin');        // Xử lý thêm danh mục
+$router->get('/admin/categories/edit/{id}', 'AdminController', 'editCategory', 'admin');  // Form sửa danh mục
+$router->post('/admin/categories/edit/{id}', 'AdminController', 'editCategory', 'admin'); // Xử lý sửa danh mục
+$router->get('/admin/categories/delete/{id}', 'AdminController', 'deleteCategory', 'admin'); // Xóa danh mục
 
-// Admin brand routes
-$router->get('/admin/brands', 'AdminController', 'brands', 'admin');
-$router->get('/admin/brands/add', 'AdminController', 'addBrand', 'admin');
-$router->post('/admin/brands/add', 'AdminController', 'addBrand', 'admin');
-$router->get('/admin/brands/edit/{id}', 'AdminController', 'editBrand', 'admin');
-$router->post('/admin/brands/edit/{id}', 'AdminController', 'editBrand', 'admin');
-$router->get('/admin/brands/delete/{id}', 'AdminController', 'deleteBrand', 'admin');
+// ===== ADMIN BRAND MANAGEMENT =====
+$router->get('/admin/brands', 'AdminController', 'brands', 'admin');              // Danh sách thương hiệu
+$router->get('/admin/brands/add', 'AdminController', 'addBrand', 'admin');        // Form thêm thương hiệu
+$router->post('/admin/brands/add', 'AdminController', 'addBrand', 'admin');       // Xử lý thêm thương hiệu
+$router->get('/admin/brands/edit/{id}', 'AdminController', 'editBrand', 'admin'); // Form sửa thương hiệu
+$router->post('/admin/brands/edit/{id}', 'AdminController', 'editBrand', 'admin');// Xử lý sửa thương hiệu
+$router->get('/admin/brands/delete/{id}', 'AdminController', 'deleteBrand', 'admin'); // Xóa thương hiệu
 
-// Admin promotion routes
-$router->get('/admin/promotions', 'AdminController', 'promotions', 'admin');
-$router->get('/admin/promotions/add', 'AdminController', 'addPromotion', 'admin');
-$router->post('/admin/promotions/add', 'AdminController', 'addPromotion', 'admin');
-$router->get('/admin/promotions/delete/{id}', 'AdminController', 'deletePromotion', 'admin');
+// ===== ADMIN PROMOTION MANAGEMENT =====
+$router->get('/admin/promotions', 'AdminController', 'promotions', 'admin');         // Danh sách khuyến mãi
+$router->get('/admin/promotions/add', 'AdminController', 'addPromotion', 'admin');   // Form thêm khuyến mãi
+$router->post('/admin/promotions/add', 'AdminController', 'addPromotion', 'admin');  // Xử lý thêm khuyến mãi
+$router->get('/admin/promotions/delete/{id}', 'AdminController', 'deletePromotion', 'admin'); // Xóa khuyến mãi
 
-// Admin order routes
-$router->get('/admin/orders', 'AdminController', 'orders', 'admin');
-$router->get('/admin/orders/delete/{id}', 'AdminController', 'deleteOrder', 'admin');
+// ===== ADMIN ORDER MANAGEMENT =====
+$router->get('/admin/orders', 'AdminController', 'orders', 'admin');              // Danh sách đơn hàng
+$router->get('/admin/orders/delete/{id}', 'AdminController', 'deleteOrder', 'admin'); // Xóa đơn hàng
 
-// Admin user routes
-$router->get('/admin/users', 'AdminController', 'users', 'admin');
-$router->get('/admin/users/delete/{id}', 'AdminController', 'deleteUser', 'admin');
+// ===== ADMIN USER MANAGEMENT =====
+$router->get('/admin/users', 'AdminController', 'users', 'admin');               // Danh sách người dùng
+$router->get('/admin/users/delete/{id}', 'AdminController', 'deleteUser', 'admin'); // Xóa người dùng
 
-// Admin notification routes
-$router->get('/admin/notifications', 'NotificationController', 'adminIndex', 'admin');
-$router->get('/api/admin/notifications', 'NotificationController', 'getAllNotifications', 'admin');
-$router->post('/api/admin/notifications/send', 'NotificationController', 'sendCustomNotification', 'admin');
-$router->post('/api/admin/notifications/delete', 'NotificationController', 'deleteNotification', 'admin');
+// ===== ADMIN NOTIFICATION MANAGEMENT =====
+$router->get('/admin/notifications', 'NotificationController', 'adminIndex', 'admin');           // Trang quản lý thông báo
+$router->get('/api/admin/notifications', 'NotificationController', 'getAllNotifications', 'admin'); // API lấy tất cả thông báo
+$router->post('/api/admin/notifications/send', 'NotificationController', 'sendCustomNotification', 'admin'); // API gửi thông báo tùy chỉnh
+$router->post('/api/admin/notifications/delete', 'NotificationController', 'deleteNotification', 'admin'); // API xóa thông báo
 
-// Notification API routes
-$router->get('/api/notifications', 'NotificationController', 'getNotifications', 'auth');
-$router->post('/api/notifications/mark-read', 'NotificationController', 'markAsRead', 'auth');
-$router->post('/api/notifications/mark-all-read', 'NotificationController', 'markAllAsRead', 'auth');
-$router->get('/api/notifications/unread-count', 'NotificationController', 'getUnreadCount', 'auth');
-$router->post('/api/notifications/test', 'NotificationController', 'sendTestNotification', 'admin');
+// ===== NOTIFICATION API ROUTES (cho user) =====
+$router->get('/api/notifications', 'NotificationController', 'getNotifications', 'auth');         // Lấy thông báo của user
+$router->post('/api/notifications/mark-read', 'NotificationController', 'markAsRead', 'auth');    // Đánh dấu đã đọc
+$router->post('/api/notifications/mark-all-read', 'NotificationController', 'markAllAsRead', 'auth'); // Đánh dấu tất cả đã đọc
+$router->get('/api/notifications/unread-count', 'NotificationController', 'getUnreadCount', 'auth'); // Đếm thông báo chưa đọc
+$router->post('/api/notifications/test', 'NotificationController', 'sendTestNotification', 'admin'); // Gửi thông báo test
 
-// Notification settings routes
-$router->get('/notifications/settings', 'NotificationController', 'settings', 'auth');
-$router->get('/api/notifications/settings', 'NotificationController', 'getSettings', 'auth');
-$router->post('/api/notifications/settings', 'NotificationController', 'updateSettings', 'auth');
+// ===== NOTIFICATION SETTINGS =====
+$router->get('/notifications/settings', 'NotificationController', 'settings', 'auth');           // Trang cài đặt thông báo
+$router->get('/api/notifications/settings', 'NotificationController', 'getSettings', 'auth');    // API lấy cài đặt
+$router->post('/api/notifications/settings', 'NotificationController', 'updateSettings', 'auth'); // API cập nhật cài đặt
 
-// Dispatch the request
+// ===== ADMIN AJAX ROUTES (các endpoint AJAX cho admin) =====
+$router->post('/admin/ajax/delete-image', 'AdminController', 'deleteImage', 'admin');        // Xóa hình ảnh qua AJAX
+$router->post('/admin/ajax/get-deletion-info', 'AdminController', 'getDeletionInfo', 'admin'); // Lấy thông tin xóa qua AJAX
+
+// ===== DISPATCH REQUEST =====
+// Xử lý request hiện tại và chuyển đến controller/method tương ứng
 $router->dispatch();
 ?>

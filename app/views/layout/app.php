@@ -242,6 +242,10 @@
     <script src="/assets/js/auth.js"></script>
     <?php endif; ?>
 
+    <!-- Banner Slider JavaScript (only for home page) -->
+    <?php if (isset($title) && strpos($title, 'Trang chủ') !== false): ?>
+    <script src="/assets/js/banner-slider.js"></script>
+    <?php endif; ?>
 
 </body>
 </html>

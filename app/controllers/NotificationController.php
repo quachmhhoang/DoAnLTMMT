@@ -1,5 +1,6 @@
 <?php
 
+// Import các file cần thiết
 require_once __DIR__ . '/../services/NotificationService.php';
 require_once __DIR__ . '/../helpers/SessionHelper.php';
 
@@ -9,41 +10,50 @@ class NotificationController
 
     public function __construct()
     {
+        // Khởi tạo NotificationService
         $this->notificationService = new NotificationService();
     }
 
     /**
-     * Get notifications for current user (AJAX endpoint)
+     * API: Lấy danh sách thông báo của người dùng hiện tại
      */
     public function getNotifications()
     {
+        // Kiểm tra người dùng đã đăng nhập chưa
         if (!SessionHelper::isLoggedIn()) {
-            http_response_code(401);
+            http_response_code(401); // Unauthorized
             echo json_encode(['error' => 'Unauthorized']);
             return;
         }
 
+        // Lấy thông tin người dùng hiện tại
         $user = SessionHelper::getCurrentUser();
+
+        // Lấy tham số limit và offset từ query string (GET)
         $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
         $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
 
         try {
+            // Gọi service để lấy danh sách thông báo
             $notifications = $this->notificationService->getUserNotifications($user->user_id, $limit, $offset);
+            // Gọi service để lấy số lượng thông báo chưa đọc
             $unreadCount = $this->notificationService->getUnreadCount($user->user_id);
 
+            // Trả kết quả thành công dưới dạng JSON
             echo json_encode([
                 'success' => true,
                 'notifications' => $notifications,
                 'unread_count' => $unreadCount
             ]);
         } catch (Exception $e) {
+            // Trả lỗi nếu có exception
             http_response_code(500);
             echo json_encode(['error' => 'Failed to fetch notifications']);
         }
     }
 
     /**
-     * Mark notification as read (AJAX endpoint)
+     * API: Đánh dấu một thông báo là đã đọc
      */
     public function markAsRead()
     {
@@ -59,6 +69,7 @@ class NotificationController
             return;
         }
 
+        // Lấy user và dữ liệu từ body request
         $user = SessionHelper::getCurrentUser();
         $input = json_decode(file_get_contents('php://input'), true);
         $notificationId = isset($input['notification_id']) ? (int)$input['notification_id'] : 0;
@@ -71,7 +82,7 @@ class NotificationController
 
         try {
             $result = $this->notificationService->markAsRead($notificationId, $user->user_id);
-            
+
             if ($result) {
                 echo json_encode(['success' => true]);
             } else {
@@ -85,7 +96,7 @@ class NotificationController
     }
 
     /**
-     * Mark all notifications as read (AJAX endpoint)
+     * API: Đánh dấu tất cả thông báo là đã đọc
      */
     public function markAllAsRead()
     {
@@ -105,7 +116,7 @@ class NotificationController
 
         try {
             $result = $this->notificationService->markAllAsRead($user->user_id);
-            
+
             if ($result) {
                 echo json_encode(['success' => true]);
             } else {
@@ -119,7 +130,7 @@ class NotificationController
     }
 
     /**
-     * Send test notification (Admin only)
+     * API: Gửi thông báo thử nghiệm (chỉ admin)
      */
     public function sendTestNotification()
     {
@@ -135,6 +146,7 @@ class NotificationController
             return;
         }
 
+        // Nhận dữ liệu từ body
         $input = json_decode(file_get_contents('php://input'), true);
         $title = $input['title'] ?? 'Test Notification';
         $message = $input['message'] ?? 'This is a test notification';
@@ -155,7 +167,6 @@ class NotificationController
                     $result = $this->notificationService->sendToRole('customer', $title, $message, $type, null, $currentUser->user_id);
                     break;
                 default:
-                    // Send to specific user
                     if (is_numeric($target)) {
                         $result = $this->notificationService->sendToUser($target, $title, $message, $type, null, $currentUser->user_id);
                     } else {
@@ -176,7 +187,7 @@ class NotificationController
     }
 
     /**
-     * Get unread count (AJAX endpoint)
+     * API: Lấy số lượng thông báo chưa đọc
      */
     public function getUnreadCount()
     {
@@ -198,7 +209,7 @@ class NotificationController
     }
 
     /**
-     * Admin notification management page
+     * Trang quản lý thông báo cho admin
      */
     public function adminIndex()
     {
@@ -207,11 +218,12 @@ class NotificationController
             exit();
         }
 
+        // Load view quản lý thông báo
         include __DIR__ . '/../views/admin/notifications/index.php';
     }
 
     /**
-     * Get all notifications for admin (AJAX endpoint)
+     * API: Lấy tất cả thông báo (dành cho admin)
      */
     public function getAllNotifications()
     {
@@ -221,14 +233,11 @@ class NotificationController
             return;
         }
 
-        // Check if requesting statistics
+        // Nếu yêu cầu lấy thống kê
         if (isset($_GET['stats'])) {
             try {
                 $stats = $this->notificationService->getNotificationStats();
-                echo json_encode([
-                    'success' => true,
-                    'stats' => $stats
-                ]);
+                echo json_encode(['success' => true, 'stats' => $stats]);
                 return;
             } catch (Exception $e) {
                 http_response_code(500);
@@ -259,7 +268,7 @@ class NotificationController
     }
 
     /**
-     * Send custom notification (Admin only)
+     * API: Gửi thông báo tuỳ chỉnh (Admin)
      */
     public function sendCustomNotification()
     {
@@ -326,7 +335,7 @@ class NotificationController
     }
 
     /**
-     * Delete notification (Admin only)
+     * API: Xoá thông báo (Admin)
      */
     public function deleteNotification()
     {
@@ -367,7 +376,7 @@ class NotificationController
     }
 
     /**
-     * Show notification settings page
+     * Trang thiết lập thông báo của người dùng
      */
     public function settings()
     {
@@ -380,7 +389,7 @@ class NotificationController
     }
 
     /**
-     * Get user notification settings (AJAX endpoint)
+     * API: Lấy thiết lập thông báo của người dùng
      */
     public function getSettings()
     {
@@ -394,10 +403,7 @@ class NotificationController
 
         try {
             $settings = $this->notificationService->getUserSettings($user->user_id);
-            echo json_encode([
-                'success' => true,
-                'settings' => $settings
-            ]);
+            echo json_encode(['success' => true, 'settings' => $settings]);
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to fetch settings']);
@@ -405,7 +411,7 @@ class NotificationController
     }
 
     /**
-     * Update user notification settings (AJAX endpoint)
+     * API: Cập nhật thiết lập thông báo của người dùng
      */
     public function updateSettings()
     {

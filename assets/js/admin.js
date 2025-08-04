@@ -838,3 +838,34 @@ document.addEventListener('DOMContentLoaded', () => {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = AdminDashboard;
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const imageInput = document.getElementById('images');
+    if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+            previewImages(e.target.files);
+        });
+    }
+});
+
+function previewImages(files) {
+    const preview = document.getElementById('image-preview');
+    preview.innerHTML = '';
+    
+    Array.from(files).forEach(file => {
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'img-thumbnail me-2 mb-2';
+                img.style.width = '100px';
+                img.style.height = '100px';
+                img.style.objectFit = 'cover';
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+

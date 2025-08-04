@@ -8,71 +8,298 @@ ob_start();
 </div>
 
 <!-- Statistics Cards -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card text-white bg-primary">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4><?php echo $totalProducts ?? 0; ?></h4>
-                        <p>Sản phẩm</p>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Dashboard Cards</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa726 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .dashboard-card {
+            border-radius: 20px;
+            border: none !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 25px;
+            background-color: transparent !important;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            pointer-events: none;
+        }
+
+        .card-primary {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+            border: none !important;
+        }
+
+        .card-success {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important;
+            border: none !important;
+        }
+
+        .card-info {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+            border: none !important;
+        }
+
+        .card-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+            border: none !important;
+        }
+
+        /* Đảm bảo các card hiển thị đúng màu */
+        .dashboard-card.card-primary,
+        .card.dashboard-card.card-primary {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+        }
+
+        .dashboard-card.card-success,
+        .card.dashboard-card.card-success {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important;
+        }
+
+        .dashboard-card.card-info,
+        .card.dashboard-card.card-info {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+        }
+
+        .dashboard-card.card-warning,
+        .card.dashboard-card.card-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+        }
+
+        .card-body {
+            padding: 30px 25px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .card-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-text h4 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-text p {
+            font-size: 1.1rem;
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        .card-icon {
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-card:hover .card-icon {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .card-icon i {
+            font-size: 3rem;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        /* Animation cho số */
+        @keyframes countUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-text h4 {
+            animation: countUp 0.6s ease-out;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .card-text h4 {
+                font-size: 2rem;
+            }
+            
+            .card-icon i {
+                font-size: 2.5rem;
+            }
+            
+            .card-body {
+                padding: 20px 15px;
+            }
+        }
+
+        /* Thêm hiệu ứng pulse cho icon */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+            }
+        }
+
+        .card-icon {
+            border-radius: 50%;
+            padding: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        /* Loading skeleton effect */
+        @keyframes shimmer {
+            0% {
+                background-position: -200px 0;
+            }
+            100% {
+                background-position: calc(200px + 100%) 0;
+            }
+        }
+
+        .loading {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            background-size: 200px 100%;
+            animation: shimmer 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="card dashboard-card card-primary" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important; border: none !important; color: #fff3cd !important;">
+                    <div class="card-body">
+                        <div class="card-content">
+                            <div class="card-text">
+                                <h4 id="totalProducts">125</h4>
+                                <p>Sản phẩm</p>
+                            </div>
+                            <div class="card-icon">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <i class="fas fa-mobile-alt fa-2x"></i>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <div class="card dashboard-card card-success" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important; border: none !important; color: #d1ecf1 !important;">
+                    <div class="card-body">
+                        <div class="card-content">
+                            <div class="card-text">
+                                <h4 id="totalOrders">89</h4>
+                                <p>Đơn hàng</p>
+                            </div>
+                            <div class="card-icon">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <div class="card dashboard-card card-info" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important; border: none !important; color: #f8d7da !important;">
+                    <div class="card-body">
+                        <div class="card-content">
+                            <div class="card-text">
+                                <h4 id="totalUsers">456</h4>
+                                <p>Người dùng</p>
+                            </div>
+                            <div class="card-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <div class="card dashboard-card card-warning" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important; border: none !important; color: #d4edda !important;">
+                    <div class="card-body">
+                        <div class="card-content">
+                            <div class="card-text">
+                                <h4 id="totalPromotions">12</h4>
+                                <p>Khuyến mãi</p>
+                            </div>
+                            <div class="card-icon">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card text-white bg-success">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4><?php echo $totalOrders ?? 0; ?></h4>
-                        <p>Đơn hàng</p>
-                    </div>
-                    <div>
-                        <i class="fas fa-shopping-cart fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <script>
+        // Hiệu ứng count up cho số
+        function animateCount(element, target) {
+            let current = 0;
+            const increment = target / 50;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                element.textContent = Math.floor(current);
+            }, 30);
+        }
 
-    <div class="col-md-3">
-        <div class="card text-white bg-info">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4><?php echo $totalUsers ?? 0; ?></h4>
-                        <p>Người dùng</p>
-                    </div>
-                    <div>
-                        <i class="fas fa-users fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="card text-white bg-warning">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4><?php echo $totalPromotions ?? 0; ?></h4>
-                        <p>Khuyến mãi</p>
-                    </div>
-                    <div>
-                        <i class="fas fa-percentage fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+        // Chạy animation khi trang load
+        window.addEventListener('load', () => {
+            animateCount(document.getElementById('totalProducts'), <?php echo $totalProducts; ?>);
+            animateCount(document.getElementById('totalOrders'),  <?php echo $totalOrders; ?>);
+            animateCount(document.getElementById('totalUsers'), <?php echo $totalUsers; ?>);
+            animateCount(document.getElementById('totalPromotions'), <?php echo $totalPromotions; ?>);
+        });
+    </script>
+</body>
+</html>
 
 <!-- Notification Statistics -->
 <div class="row mb-4">
@@ -290,22 +517,22 @@ setInterval(function() {
 }
 
 .card-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: #fff3cd !important;
     border-radius: 10px 10px 0 0 !important;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
     border: none;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    background: linear-gradient(135deg, #d62c1a 0%, #a93226 100%);
     transform: translateY(-1px);
 }
 
-.text-primary { color: #667eea !important; }
+.text-primary { color: #e74c3c !important; }
 .text-warning { color: #f39c12 !important; }
 .text-success { color: #27ae60 !important; }
 .text-info { color: #3498db !important; }
