@@ -53,8 +53,9 @@ ob_start();
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            background: linear-gradient(45deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.2) 100%);
             pointer-events: none;
+            z-index: 1;
         }
 
         .card-primary {
@@ -98,10 +99,22 @@ ob_start();
             background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
         }
 
+        /* Tăng cường độ tương phản cho text và icon */
+        .dashboard-card * {
+            color: #ffffff !important;
+        }
+
+        .dashboard-card h4,
+        .dashboard-card p,
+        .dashboard-card i {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5) !important;
+            font-weight: bold !important;
+        }
+
         .card-body {
             padding: 30px 25px;
             position: relative;
-            z-index: 2;
+            z-index: 3;
         }
 
         .card-content {
@@ -111,22 +124,30 @@ ob_start();
         }
 
         .card-text h4 {
-            font-size: 2.5rem;
-            font-weight: 700;
+            font-size: 3rem;
+            font-weight: 900;
             margin: 0;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6), 0 0 10px rgba(255, 255, 255, 0.3);
+            color: #ffffff !important;
+            letter-spacing: 2px;
+            -webkit-text-stroke: 1px rgba(0, 0, 0, 0.3);
+            filter: brightness(1.1);
         }
 
         .card-text p {
             font-size: 1.1rem;
             margin: 5px 0 0 0;
-            opacity: 0.9;
-            font-weight: 500;
+            opacity: 1;
+            font-weight: 600;
+            color: #ffffff !important;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
         }
 
         .card-icon {
-            opacity: 0.8;
+            opacity: 1;
             transition: all 0.3s ease;
+            text-align: center;
+            min-width: 80px;
         }
 
         .dashboard-card:hover .card-icon {
@@ -135,8 +156,13 @@ ob_start();
         }
 
         .card-icon i {
-            font-size: 3rem;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+            font-size: 4rem;
+            filter: drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.6));
+            color: #ffffff !important;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7), 0 0 15px rgba(255, 255, 255, 0.4);
+            font-weight: 900;
+            -webkit-text-stroke: 1px rgba(0, 0, 0, 0.4);
+            opacity: 0.95;
         }
 
         /* Animation cho số */
@@ -210,7 +236,7 @@ ob_start();
     <div class="dashboard-container">
         <div class="row g-4">
             <div class="col-lg-3 col-md-6">
-                <div class="card dashboard-card card-primary" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important; border: none !important; color: #fff3cd !important;">
+                <div class="card dashboard-card card-primary" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important; border: none !important; color: #ffffff !important;">
                     <div class="card-body">
                         <div class="card-content">
                             <div class="card-text">
@@ -226,7 +252,7 @@ ob_start();
             </div>
 
             <div class="col-lg-3 col-md-6">
-                <div class="card dashboard-card card-success" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important; border: none !important; color: #d1ecf1 !important;">
+                <div class="card dashboard-card card-success" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important; border: none !important; color: #ffffff !important;">
                     <div class="card-body">
                         <div class="card-content">
                             <div class="card-text">
@@ -242,7 +268,7 @@ ob_start();
             </div>
 
             <div class="col-lg-3 col-md-6">
-                <div class="card dashboard-card card-info" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important; border: none !important; color: #f8d7da !important;">
+                <div class="card dashboard-card card-info" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important; border: none !important; color: #ffffff !important;">
                     <div class="card-body">
                         <div class="card-content">
                             <div class="card-text">
@@ -258,7 +284,7 @@ ob_start();
             </div>
 
             <div class="col-lg-3 col-md-6">
-                <div class="card dashboard-card card-warning" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important; border: none !important; color: #d4edda !important;">
+                <div class="card dashboard-card card-warning" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important; border: none !important; color: #ffffff !important;">
                     <div class="card-body">
                         <div class="card-content">
                             <div class="card-text">
