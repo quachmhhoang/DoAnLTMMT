@@ -271,29 +271,22 @@ class AdminController {
             $promotion->start_date = $start_date;
             $promotion->end_date = $end_date;
 
+            // Set created_by to current admin user
+            $currentUser = SessionHelper::getCurrentUser();
+            $promotion->created_by = $currentUser ? $currentUser->user_id : null;
+
             $promotionId = $promotion->create();
             if ($promotionId) {
-                // Gửi thông báo khuyến mãi mới
+                // The Promotion model handles creating the notification record automatically
+                // Now we just need to send the WebSocket notification for real-time updates
                 try {
                     $notificationService = new NotificationService();
-                    $currentUser = SessionHelper::getCurrentUser();
 
-                    $title = "🎉 Khuyến mãi mới: " . $promotion_name;
-                    $message = "Giảm giá {$discount_percent}% - {$description}. Có hiệu lực từ " .
-                              date('d/m/Y', strtotime($start_date)) . " đến " .
-                              date('d/m/Y', strtotime($end_date));
-
-                    $promotionData = [
-                        'promotion_id' => $promotionId,
-                        'discount_percent' => $discount_percent,
-                        'start_date' => $start_date,
-                        'end_date' => $end_date,
-                        'action_url' => "/promotions/{$promotionId}"
-                    ];
-
-                    $notificationService->notifyPromotion($title, $message, $promotionData);
+                    // Send WebSocket notification for the existing promotion notification
+                    // This will fetch the notification from database and send via WebSocket
+                    $notificationService->sendPromotionWebSocketNotification($promotionId);
                 } catch (Exception $e) {
-                    error_log("Failed to send promotion notification: " . $e->getMessage());
+                    error_log("Failed to send real-time promotion notification: " . $e->getMessage());
                 }
 
                 SessionHelper::setFlash('success', 'Thêm khuyến mãi thành công!');

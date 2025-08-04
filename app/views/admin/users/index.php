@@ -1,5 +1,4 @@
 <?php
-require_once __DIR__ . '/../../../helpers/SessionHelper.php';
 $title = 'Quản lý người dùng - Admin';
 ob_start();
 ?>

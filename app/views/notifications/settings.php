@@ -1,6 +1,4 @@
 <?php
-require_once __DIR__ . '/../helpers/SessionHelper.php';
-
 if (!SessionHelper::isLoggedIn()) {
     header('Location: /login');
     exit();

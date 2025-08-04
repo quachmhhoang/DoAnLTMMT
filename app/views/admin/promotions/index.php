@@ -1,6 +1,4 @@
 <?php
-require_once __DIR__ . '/../../helpers/SessionHelper.php';
-
 if (!SessionHelper::isAdmin()) {
     header('Location: /login');
     exit();
@@ -71,11 +69,11 @@ include __DIR__ . '/../../layout/admin_header.php';
                                         <tr>
                                             <td><?= $promotion->promotion_id ?></td>
                                             <td>
-                                                <strong><?= htmlspecialchars($promotion->promotion_name) ?></strong>
+                                                <strong><?= htmlspecialchars($promotion->promotion_name ?? '') ?></strong>
                                             </td>
                                             <td>
-                                                <div class="text-truncate" style="max-width: 200px;" title="<?= htmlspecialchars($promotion->description) ?>">
-                                                    <?= htmlspecialchars($promotion->description) ?>
+                                                <div class="text-truncate" style="max-width: 200px;" title="<?= htmlspecialchars($promotion->description ?? '') ?>">
+                                                    <?= htmlspecialchars($promotion->description ?? '') ?>
                                                 </div>
                                             </td>
                                             <td>

@@ -9,7 +9,7 @@ class Database{
     public function getConnection(){
         $this->conn = null;
         try{
-            $dsn = "mysql:host=" . $this->host . ";dbname=" . $this->db_name . ";charset=utf8";
+            $dsn = "mysql:host=" . $this->host . ";dbname=" . $this->db_name . ";charset=utf8mb4";
             $options = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
@@ -17,7 +17,10 @@ class Database{
             ];
             
             $this->conn = new PDO($dsn, $this->username, $this->password, $options);
-            
+
+            // Set charset and collation explicitly
+            $this->conn->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+
             // Verify connection
             if ($this->conn) {
                 error_log("Database connection established successfully");

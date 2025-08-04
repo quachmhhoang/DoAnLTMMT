@@ -64,6 +64,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link <?php echo strpos($_SERVER['REQUEST_URI'], '/admin/promotions') !== false ? 'active' : ''; ?>" href="/admin/promotions">
+                            <i class="fas fa-percentage"></i>
+                            <span>Khuyến mãi</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link <?php echo strpos($_SERVER['REQUEST_URI'], '/admin/orders') !== false ? 'active' : ''; ?>" href="/admin/orders">
                             <i class="fas fa-shopping-cart"></i>
                             <span>Đơn hàng</span>
@@ -76,15 +82,9 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?php echo strpos($_SERVER['REQUEST_URI'], '/admin/reports') !== false ? 'active' : ''; ?>" href="/admin/reports">
-                            <i class="fas fa-chart-bar"></i>
-                            <span>Báo cáo</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo strpos($_SERVER['REQUEST_URI'], '/admin/settings') !== false ? 'active' : ''; ?>" href="/admin/settings">
-                            <i class="fas fa-cogs"></i>
-                            <span>Cài đặt</span>
+                        <a class="nav-link <?php echo strpos($_SERVER['REQUEST_URI'], '/admin/notifications') !== false ? 'active' : ''; ?>" href="/admin/notifications">
+                            <i class="fas fa-bell"></i>
+                            <span>Thông báo</span>
                         </a>
                     </li>
                     <li class="nav-item mt-3">

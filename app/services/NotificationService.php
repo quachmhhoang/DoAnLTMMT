@@ -211,10 +211,46 @@ class NotificationService
 
     /**
      * Promotion-related notifications
+     * Note: Promotions are now stored directly as notifications in the notifications table
+     * This method is kept for backward compatibility and WebSocket notifications
      */
     public function notifyPromotion($title, $message, $promotionData = null)
     {
-        $this->sendToAll($title, $message, 'promotion', $promotionData);
+        // Since promotions are now stored directly as notifications,
+        // this method primarily handles WebSocket notifications for existing promotions
+        $notification = [
+            'title' => $title,
+            'message' => $message,
+            'type' => 'promotion',
+            'data' => $promotionData,
+            'created_at' => date('Y-m-d H:i:s'),
+            'target_type' => 'all'
+        ];
+
+        $this->sendWebSocketNotification('all', null, $notification);
+    }
+
+    /**
+     * Send WebSocket notification for an existing promotion notification
+     */
+    public function sendPromotionWebSocketNotification($notificationId)
+    {
+        // Get the promotion notification from database
+        $notification = $this->notificationModel->getById($notificationId);
+
+        if ($notification && $notification['type'] === 'promotion') {
+            $notificationData = [
+                'id' => $notification['notification_id'],
+                'title' => $notification['title'],
+                'message' => $notification['message'],
+                'type' => 'promotion',
+                'data' => json_decode($notification['data'], true),
+                'created_at' => $notification['created_at'],
+                'target_type' => $notification['target_type']
+            ];
+
+            $this->sendWebSocketNotification('all', null, $notificationData);
+        }
     }
 
     /**

@@ -83,18 +83,6 @@
                             <span>Thông báo</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo strpos($_SERVER['REQUEST_URI'], '/admin/reports') !== false ? 'active' : ''; ?>" href="/admin/reports">
-                            <i class="fas fa-chart-bar"></i>
-                            <span>Báo cáo</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo strpos($_SERVER['REQUEST_URI'], '/admin/settings') !== false ? 'active' : ''; ?>" href="/admin/settings">
-                            <i class="fas fa-cogs"></i>
-                            <span>Cài đặt</span>
-                        </a>
-                    </li>
                     <li class="nav-item mt-3">
                         <a class="nav-link" href="/">
                             <i class="fas fa-home"></i>

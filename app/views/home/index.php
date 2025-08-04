@@ -1,5 +1,4 @@
 <?php
-require_once __DIR__ . '/../../helpers/SessionHelper.php';
 $title = 'Trang chủ - CellPhone Store';
 ob_start();
 ?>

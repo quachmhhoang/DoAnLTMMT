@@ -1,6 +1,6 @@
 -- Add notification tables to existing database
 
--- Tạo bảng Notifications
+-- Tạo bảng Notifications (Extended to include promotion data)
 CREATE TABLE IF NOT EXISTS notifications (
     notification_id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -14,12 +14,21 @@ CREATE TABLE IF NOT EXISTS notifications (
     user_id INT NULL, -- specific user for user-targeted notifications
     created_by INT NULL, -- admin who created the notification
     data JSON NULL, -- additional data for the notification
+
+    -- Promotion-specific fields (only used when type = 'promotion')
+    promotion_name VARCHAR(100) NULL, -- promotion name for promotion-type notifications
+    discount_percent DECIMAL(5,2) NULL, -- discount percentage for promotions
+    start_date DATE NULL, -- promotion start date
+    end_date DATE NULL, -- promotion end date
+
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (created_by) REFERENCES users(user_id),
     INDEX idx_user_id (user_id),
     INDEX idx_target_type_value (target_type, target_value),
     INDEX idx_created_at (created_at),
-    INDEX idx_is_read (is_read)
+    INDEX idx_is_read (is_read),
+    INDEX idx_type (type),
+    INDEX idx_promotion_dates (start_date, end_date) -- for querying active promotions
 );
 
 -- Tạo bảng Notification Settings (user preferences)
