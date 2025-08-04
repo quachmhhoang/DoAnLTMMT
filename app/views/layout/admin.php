@@ -22,6 +22,9 @@
     <link href="/assets/css/style.css" rel="stylesheet">
     <link href="/assets/css/admin.css" rel="stylesheet">
     <link href="/assets/css/animations.css" rel="stylesheet">
+
+    <!-- Notification Polling Script -->
+    <script src="/assets/js/notification-polling.js"></script>
 </head>
 <body>
     <div class="admin-container">
@@ -83,7 +86,9 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link <?php echo strpos($_SERVER['REQUEST_URI'], '/admin/notifications') !== false ? 'active' : ''; ?>" href="/admin/notifications">
-                            <i class="fas fa-bell"></i>
+                            <i class="fas fa-bell position-relative">
+                                <span class="notification-badge" id="unread-badge" style="display: none;">0</span>
+                            </i>
                             <span>Thông báo</span>
                         </a>
                     </li>
@@ -180,5 +185,76 @@
     <!-- Custom Admin JavaScript -->
     <script src="/assets/js/admin.js"></script>
     <script src="/assets/js/animations.js"></script>
+
+    <!-- Notification Badge Auto-Update -->
+    <script>
+        let notificationUpdateInterval = null;
+
+        function startNotificationBadgeUpdate() {
+            // Cập nhật ngay lập tức
+            updateNotificationBadge();
+
+            // Cập nhật mỗi 1 giây
+            notificationUpdateInterval = setInterval(updateNotificationBadge, 1);
+            console.log('✅ Notification badge auto-update started');
+        }
+
+        function stopNotificationBadgeUpdate() {
+            if (notificationUpdateInterval) {
+                clearInterval(notificationUpdateInterval);
+                notificationUpdateInterval = null;
+                console.log('⏹️ Notification badge auto-update stopped');
+            }
+        }
+
+        async function updateNotificationBadge() {
+            try {
+                const response = await fetch('/api/notifications/unread-count', {
+                    method: 'GET',
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+                if (data.success) {
+                    const badge = document.getElementById('unread-badge');
+                    const currentCount = parseInt(badge.textContent) || 0;
+                    const newCount = data.count || 0;
+
+                    if (badge) {
+                        badge.textContent = newCount;
+                        badge.style.display = newCount > 0 ? 'inline-flex' : 'none';
+
+                        // Animation nếu có thông báo mới
+                        if (newCount > currentCount && newCount > 0) {
+                            badge.classList.add('badge-pulse');
+                            setTimeout(() => badge.classList.remove('badge-pulse'), 10);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error updating notification badge:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            startNotificationBadgeUpdate();
+        });
+
+        // Tạm dừng khi tab không active
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopNotificationBadgeUpdate();
+            } else {
+                startNotificationBadgeUpdate();
+            }
+        });
+
+        // Dừng khi trang unload
+        window.addEventListener('beforeunload', function() {
+            stopNotificationBadgeUpdate();
+        });
+    </script>
 </body>
 </html>

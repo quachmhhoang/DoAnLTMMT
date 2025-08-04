@@ -187,6 +187,47 @@ class NotificationController
     }
 
     /**
+     * API: Gửi thông báo test auto-reload (chỉ dành cho admin)
+     */
+    public function sendTestAutoReload()
+    {
+        if (!SessionHelper::isAdmin()) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Access denied']);
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        $currentUser = SessionHelper::getCurrentUser();
+
+        try {
+            // Gửi thông báo test cho tất cả admin
+            $result = $this->notificationService->sendToRole(
+                'admin',
+                'Test Auto-Reload',
+                'Thông báo này sẽ trigger auto-reload trang. Trang sẽ được làm mới sau vài giây.',
+                'admin',
+                ['auto_reload_test' => true],
+                $currentUser->user_id
+            );
+
+            if ($result) {
+                echo json_encode(['success' => true, 'message' => 'Auto-reload test notification sent to all admins']);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Failed to send auto-reload test notification']);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to send auto-reload test notification: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
      * API: Lấy số lượng thông báo chưa đọc
      */
     public function getUnreadCount()
@@ -205,6 +246,38 @@ class NotificationController
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to get unread count']);
+        }
+    }
+
+    /**
+     * API: Kiểm tra thông báo mới (cho auto-reload)
+     */
+    public function checkNewNotifications()
+    {
+        if (!SessionHelper::isLoggedIn()) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            return;
+        }
+
+        $user = SessionHelper::getCurrentUser();
+        $lastCheckTime = $_GET['last_check'] ?? date('Y-m-d H:i:s', strtotime('-1 minute'));
+
+        try {
+            // Lấy thông báo mới từ thời điểm last_check
+            $newNotifications = $this->notificationService->getNewNotificationsSince($user->user_id, $lastCheckTime);
+            $unreadCount = $this->notificationService->getUnreadCount($user->user_id);
+
+            echo json_encode([
+                'success' => true,
+                'has_new' => count($newNotifications) > 0,
+                'new_notifications' => $newNotifications,
+                'unread_count' => $unreadCount,
+                'last_check' => date('Y-m-d H:i:s')
+            ]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to check new notifications']);
         }
     }
 

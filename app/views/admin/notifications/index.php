@@ -12,60 +12,60 @@ include __DIR__ . '/../../layout/admin_header.php';
     <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card bg-primary text-white">
+            <div class="card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important; border: none !important;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <h4 class="card-title" id="total-notifications">0</h4>
-                            <p class="card-text">Tổng thông báo</p>
+                            <h4 class="card-title" id="total-notifications" style="color: #ffffff !important; font-weight: 900 !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.5) !important; font-size: 2.5rem !important;">0</h4>
+                            <p class="card-text" style="color: #ffffff !important; font-weight: 600 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.3) !important;">Tổng thông báo</p>
                         </div>
                         <div class="align-self-center">
-                            <i class="fas fa-bell fa-2x"></i>
+                            <i class="fas fa-bell fa-2x" style="color: #ffffff !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.5) !important; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3)) !important;"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-warning text-white">
+            <div class="card" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important; border: none !important;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <h4 class="card-title" id="unread-notifications">0</h4>
-                            <p class="card-text">Chưa đọc</p>
+                            <h4 class="card-title" id="unread-notifications" style="color: #ffffff !important; font-weight: 900 !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.5) !important; font-size: 2.5rem !important;">0</h4>
+                            <p class="card-text" style="color: #ffffff !important; font-weight: 600 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.3) !important;">Chưa đọc</p>
                         </div>
                         <div class="align-self-center">
-                            <i class="fas fa-bell-slash fa-2x"></i>
+                            <i class="fas fa-bell-slash fa-2x" style="color: #ffffff !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.5) !important; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3)) !important;"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-success text-white">
+            <div class="card" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important; border: none !important;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <h4 class="card-title" id="notifications-24h">0</h4>
-                            <p class="card-text">24 giờ qua</p>
+                            <h4 class="card-title" id="notifications-24h" style="color: #ffffff !important; font-weight: 900 !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.5) !important; font-size: 2.5rem !important;">0</h4>
+                            <p class="card-text" style="color: #ffffff !important; font-weight: 600 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.3) !important;">24 giờ qua</p>
                         </div>
                         <div class="align-self-center">
-                            <i class="fas fa-clock fa-2x"></i>
+                            <i class="fas fa-clock fa-2x" style="color: #ffffff !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.5) !important; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3)) !important;"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-info text-white">
+            <div class="card" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important; border: none !important;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <h4 class="card-title" id="notifications-7d">0</h4>
-                            <p class="card-text">7 ngày qua</p>
+                            <h4 class="card-title" id="notifications-7d" style="color: #ffffff !important; font-weight: 900 !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.5) !important; font-size: 2.5rem !important;">0</h4>
+                            <p class="card-text" style="color: #ffffff !important; font-weight: 600 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.3) !important;">7 ngày qua</p>
                         </div>
                         <div class="align-self-center">
-                            <i class="fas fa-calendar-week fa-2x"></i>
+                            <i class="fas fa-calendar-week fa-2x" style="color: #ffffff !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.5) !important; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3)) !important;"></i>
                         </div>
                     </div>
                 </div>
@@ -216,8 +216,8 @@ include __DIR__ . '/../../layout/admin_header.php';
 }
 
 .card-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: #fff3cd !important;
 }
 
 .btn-primary {
@@ -539,6 +539,289 @@ function showError(message) {
     // You can implement a toast notification here
     alert(message);
 }
+
+// Auto-update notification counts
+let lastUpdateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+let updateInterval = null;
+
+function startAutoUpdate() {
+    // Cập nhật mỗi 30 giây
+    updateInterval = setInterval(() => {
+        updateNotificationCounts();
+    }, 30000);
+
+    console.log('✅ Auto-update notification counts started (30s interval)');
+}
+
+function stopAutoUpdate() {
+    if (updateInterval) {
+        clearInterval(updateInterval);
+        updateInterval = null;
+        console.log('⏹️ Auto-update notification counts stopped');
+    }
+}
+
+async function updateNotificationCounts() {
+    try {
+        // Lấy thống kê mới
+        const response = await fetch('/api/admin/notifications?stats=1');
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (!data.success) return;
+
+        const stats = data.stats;
+        const currentStats = {
+            total: parseInt(document.getElementById('total-notifications').textContent) || 0,
+            unread: parseInt(document.getElementById('unread-notifications').textContent) || 0,
+            today: parseInt(document.getElementById('notifications-24h').textContent) || 0,
+            thisWeek: parseInt(document.getElementById('notifications-week').textContent) || 0
+        };
+
+        // Kiểm tra có thay đổi không
+        let hasChanges = false;
+
+        if (stats.total !== currentStats.total) {
+            updateCountWithAnimation('total-notifications', stats.total);
+            hasChanges = true;
+        }
+
+        if (stats.unread !== currentStats.unread) {
+            updateCountWithAnimation('unread-notifications', stats.unread);
+            hasChanges = true;
+
+            // Nếu có thông báo chưa đọc mới, hiển thị notification
+            if (stats.unread > currentStats.unread) {
+                showNewNotificationAlert(stats.unread - currentStats.unread);
+            }
+        }
+
+        if (stats.today !== currentStats.today) {
+            updateCountWithAnimation('notifications-24h', stats.today);
+            hasChanges = true;
+        }
+
+        if (stats.this_week !== currentStats.thisWeek) {
+            updateCountWithAnimation('notifications-week', stats.this_week);
+            hasChanges = true;
+        }
+
+        // Nếu có thay đổi, reload danh sách thông báo
+        if (hasChanges) {
+            console.log('🔔 Detected notification changes, reloading list...');
+            loadNotifications();
+        }
+
+        lastUpdateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+    } catch (error) {
+        console.error('❌ Error updating notification counts:', error);
+    }
+}
+
+function updateCountWithAnimation(elementId, newValue) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+
+    const currentValue = parseInt(element.textContent) || 0;
+
+    // Thêm animation class
+    element.parentElement.parentElement.parentElement.classList.add('notification-update');
+
+    // Animate số từ current đến new value
+    animateCount(element, currentValue, newValue);
+
+    // Xóa animation class sau 1 giây
+    setTimeout(() => {
+        element.parentElement.parentElement.parentElement.classList.remove('notification-update');
+    }, 1000);
+}
+
+function animateCount(element, start, end) {
+    const duration = 800; // 0.8 giây
+    const startTime = performance.now();
+
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Easing function (ease-out)
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(start + (end - start) * easeOut);
+
+        element.textContent = current;
+
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        }
+    }
+
+    requestAnimationFrame(update);
+}
+
+function showNewNotificationAlert(newCount) {
+    // Tạo toast notification
+    const toast = document.createElement('div');
+    toast.className = 'toast notification-alert show';
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: #fff3cd !important;
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
+        animation: slideInRight 0.3s ease-out;
+    `;
+
+    toast.innerHTML = `
+        <div class="toast-header" style="background: rgba(231,76,60,0.1); border-bottom: 1px solid rgba(231,76,60,0.2);">
+            <i class="fas fa-bell me-2" style="color: #fff3cd !important;"></i>
+            <strong class="me-auto" style="color: #fff3cd !important;">Thông báo mới</strong>
+            <button type="button" class="btn-close btn-close-white" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+        <div class="toast-body" style="background: rgba(231,76,60,0.05);">
+            Có <strong>${newCount}</strong> thông báo chưa đọc mới!
+        </div>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Tự động xóa sau 5 giây
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 5000);
+}
+
+// Khởi động auto-update khi trang load
+document.addEventListener('DOMContentLoaded', function() {
+    // Delay 2 giây để trang load xong
+    setTimeout(() => {
+        startAutoUpdate();
+    }, 2000);
+});
+
+// Dừng auto-update khi trang unload
+window.addEventListener('beforeunload', function() {
+    stopAutoUpdate();
+});
+
+// Tạm dừng khi tab không active
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        stopAutoUpdate();
+    } else {
+        startAutoUpdate();
+    }
+});
+</script>
+
+<!-- CSS cho animations -->
+<style>
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.notification-update {
+    animation: pulse 0.6s ease-in-out;
+    box-shadow: 0 0 20px rgba(40, 167, 69, 0.3) !important;
+    transition: all 0.3s ease;
+}
+
+.notification-alert .toast-header,
+.notification-alert .toast-body {
+    border: none;
+}
+
+/* Enhanced Statistics Cards */
+.card {
+    border-radius: 15px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+.card:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.05) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.card-body {
+    position: relative;
+    z-index: 2;
+    padding: 2rem !important;
+}
+
+.card-title {
+    letter-spacing: 1px !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.card-text {
+    font-size: 1.1rem !important;
+    margin: 0 !important;
+    opacity: 0.95 !important;
+}
+
+.fas {
+    transition: all 0.3s ease !important;
+}
+
+.card:hover .fas {
+    transform: scale(1.1) !important;
+}
+
+/* Pulse animation for numbers */
+@keyframes numberPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.card-title {
+    animation: numberPulse 2s ease-in-out infinite;
+}
+
+/* Gradient text effect */
+.card-title {
+    background: linear-gradient(45deg, #ffffff, #f8f9fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: brightness(1.1);
+}
+</style>
 </script>
 
 <?php include __DIR__ . '/../../layout/admin_footer.php'; ?>

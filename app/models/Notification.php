@@ -227,6 +227,31 @@ class Notification
     }
 
     /**
+     * Get new notifications since a specific time for a user
+     */
+    public function getNewNotificationsSince($userId, $sinceTime)
+    {
+        $query = "SELECT n.*, u.username as created_by_username
+                  FROM " . $this->table_name . " n
+                  LEFT JOIN users u ON n.created_by = u.user_id
+                  WHERE n.created_at > :since_time
+                  AND (
+                      (n.target_type = 'user' AND n.user_id = :user_id) OR
+                      (n.target_type = 'role' AND n.target_value = (SELECT role FROM users WHERE user_id = :user_id2)) OR
+                      (n.target_type = 'all')
+                  )
+                  ORDER BY n.created_at DESC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':since_time', $sinceTime);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->bindParam(':user_id2', $userId, PDO::PARAM_INT);
+
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Get all notifications for admin with pagination and filtering
      */
     public function getAllNotifications($limit = 50, $offset = 0, $type = '')

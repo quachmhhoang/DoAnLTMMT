@@ -299,6 +299,8 @@ ob_start();
                 </div>
             </div>
         </div>
+
+        
     </div>
 
     <script>
@@ -323,7 +325,87 @@ ob_start();
             animateCount(document.getElementById('totalUsers'), <?php echo $totalUsers; ?>);
             animateCount(document.getElementById('totalPromotions'), <?php echo $totalPromotions; ?>);
         });
-    </script>
+
+        // Test Badge Update
+        async function testBadgeUpdate() {
+            try {
+                // Gọi trực tiếp function update badge
+                if (window.updateNotificationBadge) {
+                    await window.updateNotificationBadge();
+                    alert('✅ Badge đã được cập nhật! Kiểm tra icon thông báo trong sidebar.');
+                } else {
+                    alert('❌ Function updateNotificationBadge không tồn tại');
+                }
+            } catch (error) {
+                alert('❌ Lỗi: ' + error.message);
+            }
+        }
+
+    //     // Test Notification Count
+    //     async function testNotificationCount() {
+    //         try {
+    //             const response = await fetch('/api/notifications/test', {
+    //                 method: 'POST',
+    //                 headers: {
+    //                     'Content-Type': 'application/json',
+    //                 },
+    //                 body: JSON.stringify({
+    //                     title: 'Test Badge Count',
+    //                     message: 'Thông báo test để kiểm tra cập nhật số lượng badge',
+    //                     type: 'system',
+    //                     target: 'admin'
+    //                 }),
+    //                 credentials: 'same-origin'
+    //             });
+
+    //             const data = await response.json();
+
+    //             if (data.success) {
+    //                 alert('✅ Test notification đã được gửi! Badge sẽ cập nhật trong vài giây.');
+
+    //                 // Cập nhật badge sau 2 giây
+    //                 setTimeout(() => {
+    //                     if (window.updateNotificationBadge) {
+    //                         window.updateNotificationBadge();
+    //                     }
+    //                 }, 2000);
+    //             } else {
+    //                 alert('❌ Lỗi: ' + (data.error || 'Unknown error'));
+    //             }
+    //         } catch (error) {
+    //             alert('❌ Lỗi kết nối: ' + error.message);
+    //         }
+    //     }
+
+    //     // Test Normal Notification
+    //     async function testNotification() {
+    //         try {
+    //             const response = await fetch('/api/notifications/test', {
+    //                 method: 'POST',
+    //                 headers: {
+    //                     'Content-Type': 'application/json',
+    //                 },
+    //                 body: JSON.stringify({
+    //                     title: 'Test Notification',
+    //                     message: 'Đây là thông báo test không auto-reload',
+    //                     type: 'system',
+    //                     target: 'admin'
+    //                 }),
+    //                 credentials: 'same-origin'
+    //             });
+
+    //             const data = await response.json();
+
+    //             if (data.success) {
+    //                 alert('✅ Test notification đã được gửi!');
+    //             } else {
+    //                 alert('❌ Lỗi: ' + (data.error || 'Unknown error'));
+    //             }
+    //         } catch (error) {
+    //             alert('❌ Lỗi kết nối: ' + error.message);
+    //         }
+    //     }
+    // </script>
 </body>
 </html>
 

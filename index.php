@@ -86,7 +86,9 @@ $router->get('/api/notifications', 'NotificationController', 'getNotifications',
 $router->post('/api/notifications/mark-read', 'NotificationController', 'markAsRead', 'auth');    // Đánh dấu đã đọc
 $router->post('/api/notifications/mark-all-read', 'NotificationController', 'markAllAsRead', 'auth'); // Đánh dấu tất cả đã đọc
 $router->get('/api/notifications/unread-count', 'NotificationController', 'getUnreadCount', 'auth'); // Đếm thông báo chưa đọc
+$router->get('/api/notifications/check-new', 'NotificationController', 'checkNewNotifications', 'auth'); // Kiểm tra thông báo mới
 $router->post('/api/notifications/test', 'NotificationController', 'sendTestNotification', 'admin'); // Gửi thông báo test
+$router->post('/api/notifications/test-reload', 'NotificationController', 'sendTestAutoReload', 'admin'); // Test auto-reload
 
 // ===== NOTIFICATION SETTINGS =====
 $router->get('/notifications/settings', 'NotificationController', 'settings', 'auth');           // Trang cài đặt thông báo

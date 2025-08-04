@@ -281,6 +281,14 @@ class NotificationService
     }
 
     /**
+     * Get new notifications since a specific time
+     */
+    public function getNewNotificationsSince($userId, $sinceTime)
+    {
+        return $this->notificationModel->getNewNotificationsSince($userId, $sinceTime);
+    }
+
+    /**
      * Get unread count for a user
      */
     public function getUnreadCount($userId)

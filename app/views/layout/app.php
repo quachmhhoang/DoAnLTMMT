@@ -22,6 +22,9 @@
     <!-- Custom CSS -->
     <link href="/assets/css/style.css" rel="stylesheet">
     <link href="/assets/css/animations.css" rel="stylesheet">
+
+    <!-- Notification Polling Script -->
+    <script src="/assets/js/notification-polling.js"></script>
 </head>
 <body>
     <!-- Navigation -->
@@ -70,7 +73,7 @@
                         <li class="nav-item dropdown">
                             <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" onclick="loadNotifications()">
                                 <i class="fas fa-bell"></i>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge" style="display: none;">
+                                <span class="position-absolute top-0 start-1 translate-middle badge rounded-pill bg-danger notification-badge" style="display: none;">
                                     0
                                 </span>
                             </a>
@@ -192,14 +195,14 @@
             // Initialize WebSocket with enhanced real-time features
             initializeNotificationWebSocket(<?= $user->user_id ?>, token);
 
-            // Auto-refresh notifications every 30 seconds as backup
+            // Auto-refresh notifications every 1 seconds as backup
             setInterval(() => {
                 if (window.notificationWS && !window.notificationWS.isConnected) {
                     console.log('WebSocket disconnected, refreshing notifications via HTTP');
                     if (window.loadNotifications) loadNotifications();
                     if (window.loadUnreadCount) loadUnreadCount();
                 }
-            }, 30000);
+            }, 1);
 
             // Page visibility API to reconnect when page becomes visible
             document.addEventListener('visibilitychange', () => {
@@ -227,12 +230,12 @@
                 document.removeEventListener('click', requestNotificationPermission);
             }, { once: true });
 
-            // Show connection status for 3 seconds on page load
+            // Show connection status for 1 seconds on page load
             setTimeout(() => {
                 if (window.notificationWS && window.notificationWS.isConnected) {
                     console.log('✅ Real-time notifications are active!');
                 }
-            }, 2000);
+            }, 100);
         });
     </script>
     <?php endif; ?>
@@ -245,6 +248,113 @@
     <!-- Banner Slider JavaScript (only for home page) -->
     <?php if (isset($title) && strpos($title, 'Trang chủ') !== false): ?>
     <script src="/assets/js/banner-slider.js"></script>
+    <?php endif; ?>
+
+    <!-- User Notification Badge Auto-Update -->
+    <?php if (SessionHelper::isLoggedIn()): ?>
+    <script>
+        let userNotificationInterval = null;
+
+        function startUserNotificationUpdate() {
+            // Cập nhật ngay lập tức
+            updateUserNotificationBadge();
+
+            // Cập nhật mỗi 1 giây
+            userNotificationInterval = setInterval(updateUserNotificationBadge, 1);
+            console.log('✅ User notification badge auto-update started');
+        }
+
+        function stopUserNotificationUpdate() {
+            if (userNotificationInterval) {
+                clearInterval(userNotificationInterval);
+                userNotificationInterval = null;
+                console.log('⏹️ User notification badge auto-update stopped');
+            }
+        }
+
+        async function updateUserNotificationBadge() {
+            try {
+                const response = await fetch('/api/notifications/unread-count', {
+                    method: 'GET',
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+                if (data.success) {
+                    const badge = document.querySelector('.notification-badge');
+                    const currentCount = parseInt(badge.textContent) || 0;
+                    const newCount = data.count || 0;
+
+                    if (badge) {
+                        badge.textContent = newCount;
+                        badge.style.display = newCount > 0 ? 'inline' : 'none';
+
+                        // Animation nếu có thông báo mới
+                        if (newCount > currentCount && newCount > 0) {
+                            badge.classList.add('badge-pulse');
+                            setTimeout(() => badge.classList.remove('badge-pulse'), 1);
+
+                            // Hiển thị toast notification nhẹ
+                            showSimpleNotification(`Bạn có ${newCount - currentCount} thông báo mới!`);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error updating user notification badge:', error);
+            }
+        }
+
+        function showSimpleNotification(message) {
+            // Tạo toast notification đơn giản
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-info alert-dismissible fade show';
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                animation: slideInRight 0.3s ease-out;
+            `;
+
+            toast.innerHTML = `
+                <i class="fas fa-bell me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(toast);
+
+            // Tự động xóa sau 4 giây
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.style.animation = 'slideOutRight 0.3s ease-in';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 4000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            startUserNotificationUpdate();
+        });
+
+        // Tạm dừng khi tab không active
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopUserNotificationUpdate();
+            } else {
+                startUserNotificationUpdate();
+            }
+        });
+
+        // Dừng khi trang unload
+        window.addEventListener('beforeunload', function() {
+            stopUserNotificationUpdate();
+        });
+    </script>
     <?php endif; ?>
 
 </body>

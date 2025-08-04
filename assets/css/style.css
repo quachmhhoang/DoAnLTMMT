@@ -2007,3 +2007,35 @@ main.container {
 .notification-item.type-admin {
     border-left-color: var(--primary-color);
 }
+
+/* User Notification Badge Animations */
+.notification-badge.badge-pulse {
+    animation: userBadgePulse 0.8s ease-in-out;
+}
+
+@keyframes userBadgePulse {
+    0% {
+        transform: scale(1);
+        background: #dc3545;
+    }
+    50% {
+        transform: scale(1.2);
+        background: #ff4757;
+        box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+    }
+    100% {
+        transform: scale(1);
+        background: #dc3545;
+    }
+}
+
+/* Toast Animation for User Notifications */
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
